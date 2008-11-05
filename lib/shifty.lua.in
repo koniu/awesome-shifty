@@ -20,11 +20,12 @@ local client = client
 local wibox = wibox
 local image = image
 local awful = awful
+local hooks = hooks
 local string = string
 local widget = widget
 local screen = screen
 local button = button
-local capi = { screen = screen }
+local capi = { screen = screen, hooks = hooks }
 local beautiful = awful.beautiful.get()
 --local tags = tags
 
@@ -65,14 +66,28 @@ function history_back()
 	until set
 end
 
+function viewidx(i, screen)
+    local tags = tags[screen]
+    local sel = awful.tag.selected()
+    awful.tag.viewnone()
+    for k, t in ipairs(tags) do
+        if t == sel then
+            tags[awful.util.cycle(#tags, k + i)].selected = true
+        end
+    end
+end
+
+
 function tag_next() 
-	table.insert(history,awful.tag.selected(1))
-	awful.tag.viewnext() 
+	local cur = awful.tag.selected(1)
+	table.insert(history, cur)
+	viewidx(1,1)
 end
 
 function tag_prev() 
-	table.insert(history,awful.tag.selected(1))
-	awful.tag.viewprev()
+	local cur = awful.tag.selected(1)
+	table.insert(history, cur)
+ 	viewidx(-1,1)
 end
 
 function tag_rename(name, t)
@@ -87,6 +102,18 @@ function tag_send_next()
 	if nxt > #tags[1] then nxt = 1 end
 	awful.tag.viewonly(tags[1][nxt])
 	awful.client.movetotag(tags[1][nxt], client.focus)
+end
+
+function tag_move_right()
+	local cur = tag2index(awful.tag.selected(1))
+	tags[1][cur], tags[1][cur+1] = tags[1][cur+1], tags[1][cur]
+	awful.hooks.user.call("tags", 1)
+end
+
+function tag_move_left()
+	local cur = tag2index(awful.tag.selected(1))
+	tags[1][cur], tags[1][cur-1] = tags[1][cur-1], tags[1][cur]
+	awful.hooks.user.call("tags", 1 )
 end
 
 function tag_send_prev()
@@ -171,6 +198,72 @@ end
 
 
 
+
+function taglistnew(scr, label, buttons)
+    local w = {}
+    local function taglist_update (screen)
+        -- Return right now if we do not care about this screen
+        if scr ~= screen then return end
+        local tags = tags[screen]
+        -- Hack: if it has been registered as a widget in a wibox,
+        -- it's w.len since __len meta does not work on table until Lua 5.2.
+        -- Otherwise it's standard #w.
+        local len = w.len or #w
+        -- Add more widgets
+        if len < #tags then
+            for i = len + 1, #tags do
+                w[i] = widget({ type = "textbox", name = "taglist" .. i })
+            end
+        -- Remove widgets
+        elseif len > #tags then
+            for i = #tags, len do
+                w[i] = nil
+            end
+        end
+        -- Update widgets text
+        for k, tag in ipairs(tags) do
+            w[k].text = label(tag)
+            if buttons then
+                -- Replace press function by a new one calling with tags as
+                -- argument.
+                -- This is done here because order of tags can change
+                local mbuttons = {}
+                for kb, b in ipairs(buttons) do
+                    -- Copy object
+                    mbuttons[kb] = button(b)
+                    mbuttons[kb].press = function () b.press(tag) end
+                end
+                w[k]:buttons(mbuttons)
+            end
+        end
+    end
+    awful.hooks.arrange.register(taglist_update)
+    awful.hooks.tags.register(taglist_update)
+    awful.hooks.tagged.register(function (c, tag) taglist_update(c.screen) end)
+    awful.hooks.property.register(function (c, prop)
+        if c.screen == scr and prop == "urgent" then
+            taglist_update(c.screen)
+        end
+    end)
+    taglist_update(scr)
+    return w
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 awful.hooks.clients.register(function()
 	--for i,j in pairs(tags[1]) do
 	--	local sel = j	
@@ -188,3 +281,6 @@ tags = {}
 tags[1] = {}
 tag_add('sys')
 history = {}
+
+
+
