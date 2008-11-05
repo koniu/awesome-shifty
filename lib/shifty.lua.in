@@ -1,0 +1,192 @@
+--- Shifty: Dynamic tagging library for awesome3-git
+-- @author koniu &lt;gkusnierz@gmail.com&gt;
+
+-- todo:
+--  multi-screen support
+--  possibility of swapping tags places in the taglist and stuff like that, renaming
+-- 14:50 < koniu> and there's no wrapping when switching beyond first or last tag
+--  more windowmatching with sizing and stuff + include scrollclient() / maybe separate module
+
+-- package env
+
+local print = print
+local pairs = pairs
+local freetags = freetags
+local tag = tag
+local config = config
+local ipairs = ipairs
+local table = table
+local client = client
+local wibox = wibox
+local image = image
+local awful = awful
+local string = string
+local widget = widget
+local screen = screen
+local button = button
+local capi = { screen = screen }
+local beautiful = awful.beautiful.get()
+--local tags = tags
+
+module("shifty")
+
+
+
+-- get tag by name
+function name2tag(name)
+	for s=1, screen.count() do
+		for i,t in ipairs(tags[s]) do
+			if name == t.name then 
+			--print('name2tag tag', t); 
+			return t end
+		end	
+	end
+end
+
+-- get index by tag
+function tag2index(tag)
+	for i,t in ipairs(tags[tag.screen]) do
+		if tag == t then return i end
+	end
+	return nil
+end
+
+function history_back()
+--	print('history back',history[#history].name)
+	local set = nil
+	repeat
+	if history[#history].screen ~= nil and #history > 1 then
+		awful.tag.viewonly(history[#history])
+		table.remove(history,#history)
+		set = true
+	else
+		table.remove(history,#history)
+	end
+	until set
+end
+
+function tag_next() 
+	table.insert(history,awful.tag.selected(1))
+	awful.tag.viewnext() 
+end
+
+function tag_prev() 
+	table.insert(history,awful.tag.selected(1))
+	awful.tag.viewprev()
+end
+
+function tag_rename(name, t)
+	local t = t or awful.tag.selected(1)
+	t.name = name
+end
+
+function tag_send_next()
+	local cur = awful.tag.selected(1)
+	table.insert(history, cur)
+	local nxt=tag2index(cur)+1
+	if nxt > #tags[1] then nxt = 1 end
+	awful.tag.viewonly(tags[1][nxt])
+	awful.client.movetotag(tags[1][nxt], client.focus)
+end
+
+function tag_send_prev()
+	local cur = awful.tag.selected(1)
+	table.insert(history, cur)
+	local prev = tag2index(cur)-1
+	if prev < 1 then prev = #tags[1] end
+	awful.tag.viewonly(tags[1][prev])
+	awful.client.movetotag(tags[1][prev], client.focus)
+	
+end
+
+
+function tag_add(name, position, layout)
+	local pos = 0
+	if not layout then 
+		for i,j in pairs(config.tags) do 
+			if j.name == name then 
+				if j.layout then layout = j.layout end
+			end
+		end
+	end
+	if not layout then layout = "max" end
+	pos = position or #tags[1]+1
+	print('add: ', name, pos, layout)
+	--print(pos)
+	local tag = tag({name = name, layout = layout})
+	--print(tag)
+	table.insert(tags[1], pos, tag)
+	tags[1][pos].screen = 1
+	return tag
+end
+
+function tag_del(tag)
+	if tag then
+	table.remove(tags[1], tag2index(tag))
+
+	tag.screen = nil
+	print('del: ', tag.name, '#tags',#tags[1])
+	end
+end
+
+
+function apptag(c)
+	    local cls = c.class
+	    local inst = c.instance
+	    local role = c.role
+
+        for i,a in pairs(config.apps) do
+	local target = name2tag(a.tag)
+	--print('apptag cli', c)
+	--print('apptag tag', t.name, tag)
+        if a.match then
+                for k,w in pairs(a.match) do
+                        if
+                                (role and role:find(w)) or
+                                (inst and inst:find(w)) or
+                                (cls and cls:find(w))
+                        then
+				if not target then target = tag_add(a.tag) end
+
+
+                               	awful.client.movetotag(target,c)
+
+                                if not a.nopopup and target ~= awful.tag.selected(1) then
+					table.insert(history,awful.tag.selected(1))
+					awful.tag.viewonly(target) 
+                               	else 
+					awful.client.urgent.add(c)
+				end
+
+                        end
+
+                end
+        end
+        end
+end
+
+function isoccupied(t)
+ 	if not t or not t:clients() then return false end
+ 	for c in pairs(t:clients()) do return true end
+	return false
+end
+
+
+
+awful.hooks.clients.register(function()
+	--for i,j in pairs(tags[1]) do
+	--	local sel = j	
+	local sel = awful.tag.selected(1)
+		if not isoccupied(sel) then 
+			history_back()
+			tag_del(sel)
+		end
+	
+end)
+
+awful.hooks.manage.register(apptag)
+
+tags = {}
+tags[1] = {}
+tag_add('sys')
+history = {}
