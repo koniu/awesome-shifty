@@ -106,13 +106,17 @@ end
 
 function tag_move_right()
 	local cur = tag2index(awful.tag.selected(1))
-	tags[1][cur], tags[1][cur+1] = tags[1][cur+1], tags[1][cur]
-	awful.hooks.user.call("tags", 1)
+	local right = nil
+	if cur == #tags[1]  then  right =  1 else right = cur + 1 end
+	tags[1][cur], tags[1][right] = tags[1][right], tags[1][cur]
+	awful.hooks.user.call("tags", 1 )
 end
 
 function tag_move_left()
 	local cur = tag2index(awful.tag.selected(1))
-	tags[1][cur], tags[1][cur-1] = tags[1][cur-1], tags[1][cur]
+	local left = nil
+	if cur == 1  then  left =  #tags[1] else left = cur - 1 end
+	tags[1][cur], tags[1][left] = tags[1][left], tags[1][cur]
 	awful.hooks.user.call("tags", 1 )
 end
 
