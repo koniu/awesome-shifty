@@ -105,18 +105,22 @@ function tag_send_next()
 end
 
 function tag_move_right()
-	local cur = tag2index(awful.tag.selected(1))
-	local right = nil
-	if cur == #tags[1]  then  right =  1 else right = cur + 1 end
-	tags[1][cur], tags[1][right] = tags[1][right], tags[1][cur]
+	local cur = awful.tag.selected(1)
+	local curidx = tag2index(cur)
+	local target = nil
+	if curidx == #tags[1]  then  target =  1 else target = curidx + 1 end
+	table.remove(tags[1],curidx)
+	table.insert(tags[1],target,cur)
 	awful.hooks.user.call("tags", 1 )
 end
 
 function tag_move_left()
-	local cur = tag2index(awful.tag.selected(1))
-	local left = nil
-	if cur == 1  then  left =  #tags[1] else left = cur - 1 end
-	tags[1][cur], tags[1][left] = tags[1][left], tags[1][cur]
+	local cur = awful.tag.selected(1)
+	local curidx = tag2index(cur)
+	local target = nil
+	if curidx == 1  then  target =  #tags[1] else target = curidx - 1 end
+	table.remove(tags[1],curidx)
+	table.insert(tags[1],target,cur)
 	awful.hooks.user.call("tags", 1 )
 end
 
