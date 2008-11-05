@@ -121,12 +121,10 @@ function tag_add(name, position, layout)
 end
 
 function tag_del(tag)
-	if tag then
-	table.remove(tags[1], tag2index(tag))
-
-	tag.screen = nil
-	print('del: ', tag.name, '#tags',#tags[1])
-	end
+	local t = tag or awful.tag.selected(1)
+	table.remove(tags[1], tag2index(t))
+	t.screen = nil
+	print('del: ', t.name, '#tags',#tags[1])
 end
 
 
