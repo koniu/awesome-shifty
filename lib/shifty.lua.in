@@ -5,7 +5,7 @@
 --  multi-screen support
 --  more windowmatching with sizing and stuff + include scrollclient() / maybe separate module
 --  icon + text on tag
---  tag_add check for already existing tag names
+--  tag_add/tag_rename check for already existing tag names
 
 -- package env
 
@@ -32,38 +32,37 @@ local beautiful = awful.beautiful.get()
 module("shifty")
 
 
-
 -- get tag by name
 function name2tag(name)
-	for s=1, screen.count() do
-		for i,t in ipairs(tags[s]) do
-			if name == t.name then 
-			--print('name2tag tag', t); 
-			return t end
-		end	
-	end
+    for s=1, screen.count() do
+        for i,t in ipairs(tags[s]) do
+            if name == t.name then
+            --print('name2tag tag', t);
+            return t end
+        end
+    end
 end
 
 -- get index by tag
 function tag2index(tag)
-	for i,t in ipairs(tags[tag.screen]) do
-		if tag == t then return i end
-	end
-	return nil
+    for i,t in ipairs(tags[tag.screen]) do
+        if tag == t then return i end
+    end
+    return nil
 end
 
 function history_back()
---	print('history back',history[#history].name)
-	local set = nil
-	repeat
-	if history[#history].screen ~= nil and #history > 1 then
-		awful.tag.viewonly(history[#history])
-		table.remove(history,#history)
-		set = true
-	else
-		table.remove(history,#history)
-	end
-	until set
+--    print('history back',history[#history].name)
+    local set = nil
+    repeat
+    if history[#history].screen ~= nil and #history > 1 then
+        awful.tag.viewonly(history[#history])
+        table.remove(history,#history)
+        set = true
+    else
+        table.remove(history,#history)
+    end
+    until set
 end
 
 function viewidx(i, screen)
@@ -77,119 +76,108 @@ function viewidx(i, screen)
     end
 end
 
-
 function tag_next() 
-	local cur = awful.tag.selected(1)
-	table.insert(history, cur)
-	viewidx(1,1)
+    local cur = awful.tag.selected(1)
+    table.insert(history, cur)
+    viewidx(1,1)
 end
 
 function tag_prev() 
-	local cur = awful.tag.selected(1)
-	table.insert(history, cur)
- 	viewidx(-1,1)
+    local cur = awful.tag.selected(1)
+    table.insert(history, cur)
+    viewidx(-1,1)
 end
 
 function tag_rename(name, t)
-	local t = t or awful.tag.selected(1)
-	if name:len() > 0 then t.name = name end
-	awful.hooks.user.call("tags", 1)
+    local t = t or awful.tag.selected(1)
+    if name:len() > 0 then t.name = name end
+    awful.hooks.user.call("tags", 1)
 end
 
 function tag_send(idx)
-	local cur = awful.tag.selected(1)
-	local curidx = tag2index(cur)
+    local cur = awful.tag.selected(1)
+    local curidx = tag2index(cur)
         local target = awful.util.cycle(#tags[1], curidx + idx)
-	table.insert(history, cur)
-	awful.tag.viewonly(tags[1][target])
-	awful.client.movetotag(tags[1][target], client.focus)
+    table.insert(history, cur)
+    awful.tag.viewonly(tags[1][target])
+    awful.client.movetotag(tags[1][target], client.focus)
 end
 
 function tag_send_next() tag_send(1) end
 function tag_send_prev() tag_send(-1) end
 
 function tag_move(idx)
-	local cur = awful.tag.selected(1)
-	local curidx = tag2index(cur)
+    local cur = awful.tag.selected(1)
+    local curidx = tag2index(cur)
         local target = awful.util.cycle(#tags[1], curidx + idx)
-	table.remove(tags[1], curidx)
-	table.insert(tags[1], target, cur)
-	awful.hooks.user.call("tags", 1)
+    table.remove(tags[1], curidx)
+    table.insert(tags[1], target, cur)
+    awful.hooks.user.call("tags", 1)
 end
 
 function tag_move_right() tag_move(1) end
 function tag_move_left() tag_move(-1) end
 
 function tag_add(name, position, layout)
-	local pos = 0
-	if not layout then 
-		for i,j in pairs(config.tags) do 
-			if j.name == name then 
-				if j.layout then layout = j.layout end
-			end
-		end
-	end
-	if not layout then layout = "max" end
-	pos = position or #tags[1]+1
-	print('add: ', name, pos, layout)
-	--print(pos)
-	local tag = tag({name = name, layout = layout})
-	--print(tag)
-	table.insert(tags[1], pos, tag)
-	tags[1][pos].screen = 1
-	return tag
+    local pos = position or #tags[1]+1
+    local layout = nil
+    if not layout then
+        for i,j in pairs(config.tags) do
+            if j.name == name then
+                if j.layout then layout = j.layout end
+            end
+        end
+    end
+    if not layout then layout = "max" end
+    print('add: ', name, pos, layout)
+
+    local tag = tag({name = name, layout = layout})
+    table.insert(tags[1], pos, tag)
+    tags[1][pos].screen = 1
+    return tag
 end
 
 function tag_del(tag)
-	local t = tag or awful.tag.selected(1)
-	table.remove(tags[1], tag2index(t))
-	t.screen = nil
-	print('del: ', t.name, '#tags',#tags[1])
-	if not tag then history_back() end
+    local t = tag or awful.tag.selected(1)
+    table.remove(tags[1], tag2index(t))
+    t.screen = nil
+    print('del: ', t.name, '#tags',#tags[1])
+    if not tag then history_back() end
 end
 
-
 function apptag(c)
-	    local cls = c.class
-	    local inst = c.instance
-	    local role = c.role
+    local cls = c.class
+    local inst = c.instance
+    local role = c.role
 
-        for i,a in pairs(config.apps) do
-	--print('apptag cli', c)
-	--print('apptag tag', t.name, tag)
+    for i,a in pairs(config.apps) do
         if a.match then
-                for k,w in pairs(a.match) do
-                        if
-                                (role and role:find(w)) or
-                                (inst and inst:find(w)) or
-                                (cls and cls:find(w))
-                        then
-				local target = name2tag(a.tag) or tag_add(a.tag)
-
-                               	awful.client.movetotag(target,c)
-
-                                if not a.nopopup and target ~= awful.tag.selected(1) then
-					table.insert(history,awful.tag.selected(1))
-					awful.tag.viewonly(target) 
-                               	else 
-					awful.client.urgent.add(c)
-				end
-
+            for k,w in pairs(a.match) do
+                if
+                        (role and role:find(w)) or
+                        (inst and inst:find(w)) or
+                        (cls and cls:find(w))
+                then
+                        local target = name2tag(a.tag) or tag_add(a.tag)
+                        awful.client.movetotag(target,c)
+                        if not a.nopopup and target ~= awful.tag.selected(1) then
+                            table.insert(history,awful.tag.selected(1))
+                            awful.tag.viewonly(target)
+                        else
+                            awful.client.urgent.add(c)
                         end
+                    end
 
-                end
+            end
         end
-        end
+    end
 end
 
 function isoccupied(t)
- 	if not t or not t:clients() then return false end
- 	for c in pairs(t:clients()) do return true end
-	return false
+     if not t or not t:clients() then return false end
+     for c in pairs(t:clients()) do return true end
+    return false
 end
-
-
-
 
 function taglistnew(scr, label, buttons)
     local w = {}
@@ -241,15 +229,13 @@ function taglistnew(scr, label, buttons)
     return w
 end
 
-
-
 function killempty ()
-	for i,j in pairs(tags[1]) do
-		if not isoccupied(j) then 
-			if j == awful.tag.selected(1) then history_back() end
-			tag_del(j)
-		end
-	end
+    for i,j in pairs(tags[1]) do
+        if not isoccupied(j) then
+            if j == awful.tag.selected(1) then history_back() end
+            tag_del(j)
+        end
+    end
 end
 
 awful.hooks.clients.register(killempty)
