@@ -169,7 +169,6 @@ function apptag(c)
 	    local role = c.role
 
         for i,a in pairs(config.apps) do
-	local target = name2tag(a.tag)
 	--print('apptag cli', c)
 	--print('apptag tag', t.name, tag)
         if a.match then
@@ -179,8 +178,7 @@ function apptag(c)
                                 (inst and inst:find(w)) or
                                 (cls and cls:find(w))
                         then
-				if not target then target = tag_add(a.tag) end
-
+				local target = name2tag(a.tag) or tag_add(a.tag)
 
                                	awful.client.movetotag(target,c)
 
@@ -258,17 +256,18 @@ function taglistnew(scr, label, buttons)
 end
 
 
-awful.hooks.clients.register(function()
-	--for i,j in pairs(tags[1]) do
-	--	local sel = j	
-	local sel = awful.tag.selected(1)
-		if not isoccupied(sel) then 
-			history_back()
-			tag_del(sel)
-		end
-	
-end)
 
+function killempty ()
+	for i,j in pairs(tags[1]) do
+		if not isoccupied(j) then 
+			if j == awful.tag.selected(1) then history_back() end
+			tag_del(j)
+		end
+	end
+end
+
+awful.hooks.clients.register(killempty)
+--awful.hooks.arrange.register(killempty)
 awful.hooks.manage.register(apptag)
 
 tags = {}
