@@ -96,23 +96,17 @@ function tag_rename(name, t)
 	awful.hooks.user.call("tags", 1)
 end
 
-function tag_send_next()
+function tag_send(idx)
 	local cur = awful.tag.selected(1)
+	local curidx = tag2index(cur)
+        local target = awful.util.cycle(#tags[1], curidx + idx)
 	table.insert(history, cur)
-	local nxt=tag2index(cur)+1
-	if nxt > #tags[1] then nxt = 1 end
-	awful.tag.viewonly(tags[1][nxt])
-	awful.client.movetotag(tags[1][nxt], client.focus)
+	awful.tag.viewonly(tags[1][target])
+	awful.client.movetotag(tags[1][target], client.focus)
 end
 
-function tag_send_prev()
-	local cur = awful.tag.selected(1)
-	table.insert(history, cur)
-	local prev = tag2index(cur)-1
-	if prev < 1 then prev = #tags[1] end
-	awful.tag.viewonly(tags[1][prev])
-	awful.client.movetotag(tags[1][prev], client.focus)
-end
+function tag_send_next() tag_send(1) end
+function tag_send_prev() tag_send(-1) end
 
 function tag_move(idx)
 	local cur = awful.tag.selected(1)
