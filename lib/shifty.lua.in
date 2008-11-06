@@ -114,25 +114,17 @@ function tag_send_prev()
 	awful.client.movetotag(tags[1][prev], client.focus)
 end
 
-function tag_move_right()
+function tag_move(idx)
 	local cur = awful.tag.selected(1)
 	local curidx = tag2index(cur)
-	local target = nil
-	if curidx == #tags[1]  then  target =  1 else target = curidx + 1 end
-	table.remove(tags[1],curidx)
-	table.insert(tags[1],target,cur)
-	awful.hooks.user.call("tags", 1 )
+        local target = awful.util.cycle(#tags[1], curidx + idx)
+	table.remove(tags[1], curidx)
+	table.insert(tags[1], target, cur)
+	awful.hooks.user.call("tags", 1)
 end
 
-function tag_move_left()
-	local cur = awful.tag.selected(1)
-	local curidx = tag2index(cur)
-	local target = nil
-	if curidx == 1  then  target =  #tags[1] else target = curidx - 1 end
-	table.remove(tags[1],curidx)
-	table.insert(tags[1],target,cur)
-	awful.hooks.user.call("tags", 1 )
-end
+function tag_move_right() tag_move(1) end
+function tag_move_left() tag_move(-1) end
 
 function tag_add(name, position, layout)
 	local pos = 0
