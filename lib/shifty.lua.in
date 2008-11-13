@@ -2,10 +2,8 @@
 -- @author koniu &lt;gkusnierz@gmail.com&gt;
 
 -- todo:
---  multi-screen support
 --  more windowmatching with sizing and stuff + include scrollclient() / maybe separate module
 --  icon + text on tag
---  tag_add/tag_rename check for already existing tag names
 
 -- package env
 
@@ -25,8 +23,9 @@ local string = string
 local widget = widget
 local screen = screen
 local button = button
+local mouse = mouse
 local capi = { screen = screen, hooks = hooks }
-local beautiful = awful.beautiful.get()
+--local beautiful = awful.beautiful.get()
 --local tags = tags
 
 module("shifty")
@@ -34,10 +33,9 @@ module("shifty")
 
 -- get tag by name
 function name2tag(name)
-    for s=1, screen.count() do
-        for i,t in ipairs(tags[s]) do
+    for s = 1, screen.count() do
+        for i, t in ipairs(tags[s]) do
             if name == t.name then
-            --print('name2tag tag', t);
             return t end
         end
     end
@@ -45,24 +43,22 @@ end
 
 -- get index by tag
 function tag2index(tag)
-    for i,t in ipairs(tags[tag.screen]) do
+    for i, t in ipairs(tags[tag.screen]) do
         if tag == t then return i end
     end
     return nil
 end
 
-function history_back()
---    print('history back',history[#history].name)
+function history_back(screen)
     local set = nil
+    local len = #history[screen]
     repeat
-    if history[#history].screen ~= nil and #history > 1 then
-        awful.tag.viewonly(history[#history])
-        table.remove(history,#history)
+    if history[screen][len].screen ~= nil then
+        awful.tag.viewonly(history[screen][len])
         set = true
-    else
-        table.remove(history,#history)
     end
-    until set
+    table.remove(history[screen], len)
+    until set or len < 1
 end
 
 function viewidx(i, screen)
@@ -76,50 +72,59 @@ function viewidx(i, screen)
     end
 end
 
-function tag_next() 
-    local cur = awful.tag.selected(1)
-    table.insert(history, cur)
-    viewidx(1,1)
+function tag_next(screen)
+--    local scr = screen or (client.focus and client.focus.screen) or mouse.screen or 1
+    local scr = screen or mouse.screen or 1
+    local cur = awful.tag.selected(scr)
+    table.insert(history[scr], cur)
+    viewidx(1, scr)
 end
 
-function tag_prev() 
-    local cur = awful.tag.selected(1)
-    table.insert(history, cur)
-    viewidx(-1,1)
+function tag_prev(screen)
+--    local scr = screen or (client.focus and client.focus.screen) or mouse.screen or 1
+    local scr = screen or mouse.screen or 1
+    local cur = awful.tag.selected(scr)
+    table.insert(history[scr], cur)
+    viewidx(-1, scr)
 end
 
 function tag_rename(name, t)
-    local t = t or awful.tag.selected(1)
+    local scr = (t and t.screen) or mouse.screen or 1
+    local t = t or awful.tag.selected(scr)
+    print(scr, t)
     if name:len() > 0 then t.name = name end
-    awful.hooks.user.call("tags", 1)
+    awful.hooks.user.call("tags", scr)
 end
 
 function tag_send(idx)
-    local cur = awful.tag.selected(1)
+    local scr = client.focus.screen or mouse.screen
+    local cur = awful.tag.selected(scr)
     local curidx = tag2index(cur)
-        local target = awful.util.cycle(#tags[1], curidx + idx)
-    table.insert(history, cur)
-    awful.tag.viewonly(tags[1][target])
-    awful.client.movetotag(tags[1][target], client.focus)
+        local target = awful.util.cycle(#tags[scr], curidx + idx)
+    table.insert(history[scr], cur)
+    awful.tag.viewonly(tags[scr][target])
+    awful.client.movetotag(tags[scr][target], client.focus)
 end
 
 function tag_send_next() tag_send(1) end
 function tag_send_prev() tag_send(-1) end
 
 function tag_move(idx)
-    local cur = awful.tag.selected(1)
+    local scr = (client.focus and client.focus.screen) or mouse.screen or 1
+    local cur = awful.tag.selected(scr)
     local curidx = tag2index(cur)
-        local target = awful.util.cycle(#tags[1], curidx + idx)
-    table.remove(tags[1], curidx)
-    table.insert(tags[1], target, cur)
-    awful.hooks.user.call("tags", 1)
+        local target = awful.util.cycle(#tags[scr], curidx + idx)
+    table.remove(tags[scr], curidx)
+    table.insert(tags[scr], target, cur)
+    awful.hooks.user.call("tags", scr)
 end
 
 function tag_move_right() tag_move(1) end
 function tag_move_left() tag_move(-1) end
 
-function tag_add(name, position, layout)
-    local pos = position or #tags[1]+1
+function tag_add(name, screen, position, layout)
+    local scr = screen or (client.focus and client.focus.screen) or mouse.screen or 1
+    local pos = position or #tags[scr]+1
     local layout = nil
     if not layout then
         for i,j in pairs(config.tags) do
@@ -129,26 +134,29 @@ function tag_add(name, position, layout)
         end
     end
     if not layout then layout = "max" end
-    print('add: ', name, pos, layout)
+    --print('add: ', name, pos, layout)
 
-    local tag = tag({name = name, layout = layout})
-    table.insert(tags[1], pos, tag)
-    tags[1][pos].screen = 1
+    local tag = tag({name = name, screen = scr, layout = layout})
+    table.insert(tags[scr], pos, tag)
+    tags[scr][pos].screen = scr
+    if #tags[scr] == 1 then awful.tag.viewonly(tag) end
     return tag
 end
 
 function tag_del(tag)
-    local t = tag or awful.tag.selected(1)
-    table.remove(tags[1], tag2index(t))
+    local scr = (tag and tag.screen) or (client.focus and client.focus.screen) or mouse.screen or 1
+    local sel = awful.tag.selected(scr)
+    local t = tag or sel
+    table.remove(tags[scr], tag2index(t))
     t.screen = nil
-    print('del: ', t.name, '#tags',#tags[1])
-    if not tag then history_back() end
+    if t == sel then history_back(scr) end 
 end
 
 function apptag(c)
     local cls = c.class
     local inst = c.instance
     local role = c.role
+    local match = nil
 
     for i,a in pairs(config.apps) do
         if a.match then
@@ -158,24 +166,31 @@ function apptag(c)
                         (inst and inst:find(w)) or
                         (cls and cls:find(w))
                 then
-                        local target = name2tag(a.tag) or tag_add(a.tag)
-                        awful.client.movetotag(target,c)
-                        if not a.nopopup and target ~= awful.tag.selected(1) then
-                            table.insert(history,awful.tag.selected(1))
+                        match = true
+                        local target = name2tag(a.tag) or tag_add(a.tag, c.screen)
+                        awful.client.movetotag(target, c)
+                        if not a.nopopup and target ~= awful.tag.selected(target.screen) then
+                            table.insert(history[target.screen], awful.tag.selected(target.screen))
                             awful.tag.viewonly(target)
                         else
                             awful.client.urgent.add(c)
                         end
-                    end
+                end
 
             end
         end
     end
+
+    if not match and #tags[c.screen] == 0 then 
+        local target = tag_add('new', c.screen)
+        awful.client.movetotag(target, c)
+        awful.tag.viewonly(target)
+    end
 end
 
 function isoccupied(t)
-     if not t or not t:clients() then return false end
-     for c in pairs(t:clients()) do return true end
+    if not t or not t:clients() then return false end
+    for c in pairs(t:clients()) do return true end
     return false
 end
 
@@ -230,10 +245,12 @@ function taglistnew(scr, label, buttons)
 end
 
 function killempty ()
-    for i,j in pairs(tags[1]) do
-        if not isoccupied(j) then
-            if j == awful.tag.selected(1) then history_back() end
-            tag_del(j)
+    for s = 1, screen.count() do
+        for i, j in pairs(tags[s]) do
+            if not isoccupied(j) then
+                --if j == awful.tag.selected(s) then history_back(s) end
+                tag_del(j)
+            end
         end
     end
 end
@@ -242,9 +259,13 @@ awful.hooks.clients.register(killempty)
 --awful.hooks.arrange.register(killempty)
 awful.hooks.manage.register(apptag)
 
+
 tags = {}
-tags[1] = {}
-tag_add('sys')
 history = {}
+
+for s = 1, screen.count() do
+    tags[s] = {}
+    history[s] = {}
+end
 
 -- vim: filetype=lua:expandtab:shiftwidth=4:tabstop=8:softtabstop=4:encoding=utf-8:textwidth=80
