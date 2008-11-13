@@ -110,10 +110,10 @@ function tag_send_next() tag_send(1) end
 function tag_send_prev() tag_send(-1) end
 
 function tag_move(idx)
-    local scr = (client.focus and client.focus.screen) or mouse.screen or 1
+    local scr = mouse.screen or 1
     local cur = awful.tag.selected(scr)
     local curidx = tag2index(cur)
-        local target = awful.util.cycle(#tags[scr], curidx + idx)
+    local target = awful.util.cycle(#tags[scr], curidx + idx)
     table.remove(tags[scr], curidx)
     table.insert(tags[scr], target, cur)
     awful.hooks.user.call("tags", scr)
