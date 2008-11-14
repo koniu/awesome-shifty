@@ -138,7 +138,7 @@ function tag_move_right() tag_move(1) end
 function tag_move_left() tag_move(-1) end
 
 function tag_add(name, screen, position, layout)
-    local scr = screen or (client.focus and client.focus.screen) or mouse.screen or 1
+    local scr = screen or mouse.screen or 1
     local pos = position or #tags[scr]+1
     local layout = nil
     if not layout then
@@ -159,7 +159,7 @@ function tag_add(name, screen, position, layout)
 end
 
 function tag_del(tag)
-    local scr = (tag and tag.screen) or (client.focus and client.focus.screen) or mouse.screen or 1
+    local scr = (tag and tag.screen) or mouse.screen or 1
     local sel = awful.tag.selected(scr)
     local t = tag or sel
     table.remove(tags[scr], tag2index(t))
