@@ -17,7 +17,6 @@ local table = table
 local client = client
 local wibox = wibox
 local image = image
-local awful = awful
 local hooks = hooks
 local string = string
 local widget = widget
@@ -25,10 +24,13 @@ local screen = screen
 local button = button
 local mouse = mouse
 local capi = { screen = screen, hooks = hooks }
---local beautiful = awful.beautiful.get()
+local beautiful = require("beautiful")
+local awful = require("awful")
+local os = os
 --local tags = tags
 
 module("shifty")
+
 
 
 -- get tag by name
@@ -73,7 +75,6 @@ function viewidx(i, screen)
 end
 
 function tag_next(screen)
---    local scr = screen or (client.focus and client.focus.screen) or mouse.screen or 1
     local scr = screen or mouse.screen or 1
     local cur = awful.tag.selected(scr)
     table.insert(history[scr], cur)
@@ -81,26 +82,39 @@ function tag_next(screen)
 end
 
 function tag_prev(screen)
---    local scr = screen or (client.focus and client.focus.screen) or mouse.screen or 1
     local scr = screen or mouse.screen or 1
     local cur = awful.tag.selected(scr)
     table.insert(history[scr], cur)
     viewidx(-1, scr)
 end
 
-function tag_rename(name, t)
+function tag_rename(tag)
     local scr = (t and t.screen) or mouse.screen or 1
-    local t = t or awful.tag.selected(scr)
-    print(scr, t)
-    if name:len() > 0 then t.name = name end
-    awful.hooks.user.call("tags", scr)
+    local t = tag or awful.tag.selected(scr)
+    local bg = nil
+    if t == awful.tag.selected(scr) then bg = beautiful.bg_focus or '#535d6c'
+        else bg = beautiful.bg_normal or '#222222' end
+
+    awful.prompt.run({
+        fg_cursor = "orange",
+        bg_cursor = bg,
+        ul_cursor="single",
+        prompt = '<bg color="'..bg..'" /> ' },
+        taglist[scr][tag2index(t)],
+        function (name) if name:len() > 0 then t.name = name end end, nil,
+        os.getenv("HOME") .. "/.cache/awesome/history_tags", nil, function () awful.hooks.user.call("tags", scr) end)
+end
+
+function tag_new()
+    local t = tag_add('new')
+    tag_rename(t)
 end
 
 function tag_send(idx)
     local scr = client.focus.screen or mouse.screen
     local cur = awful.tag.selected(scr)
     local curidx = tag2index(cur)
-        local target = awful.util.cycle(#tags[scr], curidx + idx)
+    local target = awful.util.cycle(#tags[scr], curidx + idx)
     table.insert(history[scr], cur)
     awful.tag.viewonly(tags[scr][target])
     awful.client.movetotag(tags[scr][target], client.focus)
