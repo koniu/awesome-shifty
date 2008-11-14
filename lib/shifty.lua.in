@@ -182,7 +182,8 @@ function apptag(c)
                         (cls and cls:find(w))
                 then
                         match = true
-                        if a.screen and a.screen ~= c.screen then c.screen = a.screen end
+                        if a.screen and a.screen ~= c.screen and a.screen <= screen.count()
+                            then c.screen = a.screen end
                         local target = name2tag(a.tag, c.screen) or tag_add(a.tag, c.screen)
                         awful.client.movetotag(target, c)
                         if not a.nopopup and target ~= awful.tag.selected(target.screen) then
