@@ -34,8 +34,9 @@ module("shifty")
 
 
 -- get tag by name
-function name2tag(name)
-    for s = 1, screen.count() do
+function name2tag(name, screen)
+    local a, b = screen or 1, screen or screen.count()
+    for s = a, b do
         for i, t in ipairs(tags[s]) do
             if name == t.name then
             return t end
@@ -181,7 +182,7 @@ function apptag(c)
                         (cls and cls:find(w))
                 then
                         match = true
-                        local target = name2tag(a.tag) or tag_add(a.tag, c.screen)
+                        local target = name2tag(a.tag, c.screen) or tag_add(a.tag, c.screen)
                         awful.client.movetotag(target, c)
                         if not a.nopopup and target ~= awful.tag.selected(target.screen) then
                             table.insert(history[target.screen], awful.tag.selected(target.screen))
