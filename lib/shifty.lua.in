@@ -162,13 +162,14 @@ function apptag(c)
         if a.match then
             for k,w in pairs(a.match) do
                 if
-                        (role and role:find(w)) or
-                        (inst and inst:find(w)) or
-                        (cls and cls:find(w))
+                    (role and role:find(w)) or
+                    (inst and inst:find(w)) or
+                    (cls and cls:find(w))
                 then
-                        match = true
-                        if a.screen and a.screen ~= c.screen and a.screen <= screen.count()
-                            then c.screen = a.screen end
+                    match = true
+                    if a.screen and a.screen ~= c.screen and a.screen <= screen.count()
+                        then c.screen = a.screen end
+                    if a.tag then
                         local target = name2tag(a.tag, c.screen) or tag_add(a.tag, c.screen)
                         awful.client.movetotag(target, c)
                         if not a.nopopup and target ~= awful.tag.selected(target.screen) then
@@ -176,8 +177,8 @@ function apptag(c)
                         else
                             awful.client.urgent.add(c)
                         end
+                    end
                 end
-
             end
         end
     end
