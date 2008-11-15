@@ -174,8 +174,6 @@ function apptag(c)
                         awful.client.movetotag(target, c)
                         if not a.nopopup and target ~= awful.tag.selected(target.screen) then
                             awful.tag.viewonly(target)
-                        else
-                            awful.client.urgent.add(c)
                         end
                     end
                 end
