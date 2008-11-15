@@ -52,18 +52,6 @@ function tag2index(tag)
     return nil
 end
 
-function history_back(screen)
-    local set = nil
-    local len = #history[screen]
-    repeat
-    if history[screen][len].screen ~= nil then
-        awful.tag.viewonly(history[screen][len])
-        set = true
-    end
-    table.remove(history[screen], len)
-    until set or len < 1
-end
-
 function viewidx(i, screen)
     local tags = tags[screen]
     local sel = awful.tag.selected()
@@ -78,14 +66,12 @@ end
 function tag_next(screen)
     local scr = screen or mouse.screen or 1
     local cur = awful.tag.selected(scr)
-    table.insert(history[scr], cur)
     viewidx(1, scr)
 end
 
 function tag_prev(screen)
     local scr = screen or mouse.screen or 1
     local cur = awful.tag.selected(scr)
-    table.insert(history[scr], cur)
     viewidx(-1, scr)
 end
 
@@ -116,7 +102,6 @@ function tag_send(idx)
     local cur = awful.tag.selected(scr)
     local curidx = tag2index(cur)
     local target = awful.util.cycle(#tags[scr], curidx + idx)
-    table.insert(history[scr], cur)
     awful.tag.viewonly(tags[scr][target])
     awful.client.movetotag(tags[scr][target], client.focus)
 end
@@ -164,7 +149,7 @@ function tag_del(tag)
     local t = tag or sel
     table.remove(tags[scr], tag2index(t))
     t.screen = nil
-    if t == sel then history_back(scr) end 
+    if t == sel then awful.tag.history.restore(scr) end
 end
 
 function apptag(c)
@@ -187,7 +172,6 @@ function apptag(c)
                         local target = name2tag(a.tag, c.screen) or tag_add(a.tag, c.screen)
                         awful.client.movetotag(target, c)
                         if not a.nopopup and target ~= awful.tag.selected(target.screen) then
-                            table.insert(history[target.screen], awful.tag.selected(target.screen))
                             awful.tag.viewonly(target)
                         else
                             awful.client.urgent.add(c)
@@ -265,7 +249,6 @@ function killempty ()
     for s = 1, screen.count() do
         for i, j in pairs(tags[s]) do
             if not isoccupied(j) then
-                --if j == awful.tag.selected(s) then history_back(s) end
                 tag_del(j)
             end
         end
@@ -278,11 +261,9 @@ awful.hooks.manage.register(apptag)
 
 
 tags = {}
-history = {}
 
 for s = 1, screen.count() do
     tags[s] = {}
-    history[s] = {}
 end
 
 -- vim: filetype=lua:expandtab:shiftwidth=4:tabstop=8:softtabstop=4:encoding=utf-8:textwidth=80
