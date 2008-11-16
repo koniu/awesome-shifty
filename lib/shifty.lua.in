@@ -123,7 +123,6 @@ function tag_move_left() tag_move(-1) end
 function tag_add(args)
     local name = args.name or "__notext"
     local scr = args.screen or mouse.screen or 1
-    local pos = args.position or #tags[scr]+1
     local layout = args.layout or "max"
     local icon = args.icon
     local notext = args.notext
@@ -131,9 +130,8 @@ function tag_add(args)
     local mwfact = args.mwfact
     local nmaster = args.nmaster
     local ncol = args.ncol
-    if not layout then
-        for i,j in pairs(config.tags) do
-            if j.name == arg.name then
+    for i,j in pairs(config.tags) do
+            if j.name == args.name then
                 if not layout and j.layout then layout = j.layout end
                 if not icon and j.icon then icon = j.icon end
                 if not notext and j.notext then notext = true end
@@ -141,10 +139,11 @@ function tag_add(args)
                 if not mwfact and j.mwfact then mwfact = j.mwfact end
                 if not nmaster and j.nmaster then nmaster = j.nmaster end
                 if not ncol and j.ncol then ncol = j.ncol end
+                if not args.screen and j.screen then scr = j.screen end
             end
-        end
     end
-    local tag = tag({name = name, layout = layout})
+    local pos = args.position or #tags[scr]+1
+    local tag = tag({ name = name, layout = layout, nmaster = nmaster, mwfact = mwfact, ncol = ncol })
     data[tag] = {}
     data[tag].notext = notext
     data[tag].persist = persist
