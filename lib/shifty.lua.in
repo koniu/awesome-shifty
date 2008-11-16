@@ -91,7 +91,7 @@ function tag_rename(tag)
 end
 
 function tag_new()
-    local t = tag_add('new')
+    local t = tag_add({ name = 'new' })
     tag_rename(t)
 end
 
@@ -120,22 +120,30 @@ end
 function tag_move_right() tag_move(1) end
 function tag_move_left() tag_move(-1) end
 
-function tag_add(name, screen, position, layout, icon, persist)
-    local scr = screen or mouse.screen or 1
-    local pos = position or #tags[scr]+1
-    local notext = nil
+function tag_add(args)
+    local name = args.name or "__notext"
+    local scr = args.screen or mouse.screen or 1
+    local pos = args.position or #tags[scr]+1
+    local layout = args.layout or "max"
+    local icon = args.icon
+    local notext = args.notext
+    local persist = args.persist
+    local mwfact = args.mwfact
+    local nmaster = args.nmaster
+    local ncol = args.ncol
     if not layout then
         for i,j in pairs(config.tags) do
-            if j.name == name then
+            if j.name == arg.name then
                 if not layout and j.layout then layout = j.layout end
                 if not icon and j.icon then icon = j.icon end
-                if j.notext then notext = true end
-                if j.persist then persist = true end
+                if not notext and j.notext then notext = true end
+                if not persist and j.persist then persist = true end
+                if not mwfact and j.mwfact then mwfact = j.mwfact end
+                if not nmaster and j.nmaster then nmaster = j.nmaster end
+                if not ncol and j.ncol then ncol = j.ncol end
             end
         end
     end
-    if not layout then layout = "max" end
-    if not name or name == "" then name = "__notext" end
     local tag = tag({name = name, layout = layout})
     data[tag] = {}
     data[tag].notext = notext
@@ -175,7 +183,7 @@ function apptag(c)
                     if a.screen and a.screen ~= c.screen and a.screen <= screen.count()
                         then c.screen = a.screen end
                     if a.tag then
-                        local target = name2tag(a.tag, c.screen) or tag_add(a.tag, c.screen)
+                        local target = name2tag(a.tag, c.screen) or tag_add({ name = a.tag, screen = c.screen })
                         awful.client.movetotag(target, c)
                         if not a.nopopup and target ~= awful.tag.selected(target.screen) then
                             awful.tag.viewonly(target)
@@ -187,7 +195,7 @@ function apptag(c)
     end
 
     if not match and #tags[c.screen] == 0 then 
-        local target = tag_add('new', c.screen)
+        local target = tag_add({ name = 'new', screen = c.screen })
         awful.client.movetotag(target, c)
         awful.tag.viewonly(target)
     end
