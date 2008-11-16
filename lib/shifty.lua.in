@@ -259,20 +259,24 @@ function taglistnew(scr, label, buttons)
             end
         -- Remove widgets
         elseif len > #tags then
-            for i = 2*#tags + 1, 2*len,2 do
+            for i = 2*#tags + 1, 2*len, 2 do
                 w[i] = nil
                 w[i+1] = nil
             end
         end
         -- Update widgets text
-        for k = 1, 2*#tags,2 do
+        for k = 1, 2*#tags, 2 do
                 local a, b = label(tags[(k+1)/2])
                 if data[tags[(k+1)/2]] and data[tags[(k+1)/2]].icon then
                     w[k].image = data[tags[(k+1)/2]].icon
                     w[k].bg = b
+                else
+                    w[k].image = nil
                 end
                 if tags[(k+1)/2].name ~= "__notext" and not data[tags[(k+1)/2]].notext then
-                   w[k+1].text = a
+                    w[k+1].text = a
+                else
+                    w[k+1].text = ""
                 end
             if buttons then
                 -- Replace press function by a new one calling with tags as
