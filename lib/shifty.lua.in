@@ -3,7 +3,6 @@
 
 -- todo:
 --  more windowmatching with sizing and stuff + include scrollclient() / maybe separate module
---  icon + text on tag
 
 -- package env
 
@@ -86,7 +85,7 @@ function tag_rename(tag)
         bg_cursor = bg,
         ul_cursor="single",
         prompt = '<bg color="'..bg..'" /> ' },
-        taglist[scr][tag2index(t)],
+        taglist[scr][tag2index(t) * 2],
         function (name) if name:len() > 0 then t.name = name end end, nil,
         os.getenv("HOME") .. "/.cache/awesome/history_tags", nil, function () awful.hooks.user.call("tags", scr) end)
 end
