@@ -6,14 +6,11 @@
 
 -- package env
 
-local pairs = pairs
-local freetags = freetags
 local tag = tag
 local config = config
 local ipairs = ipairs
 local table = table
 local client = client
-local wibox = wibox
 local image = image
 local hooks = hooks
 local string = string
@@ -21,10 +18,9 @@ local widget = widget
 local screen = screen
 local button = button
 local mouse = mouse
-local capi = { screen = screen, hooks = hooks, client = client }
+local capi = { hooks = hooks, client = client }
 local beautiful = require("beautiful")
 local awful = require("awful")
-local os = os
 local image = image
 local otable = otable
 
@@ -87,7 +83,7 @@ function tag_rename(tag)
         prompt = '<bg color="'..bg..'" /> ' },
         taglist[scr][tag2index(t) * 2],
         function (name) if name:len() > 0 then t.name = name end end, nil,
-        os.getenv("HOME") .. "/.cache/awesome/history_tags", nil, function () awful.hooks.user.call("tags", scr) end)
+        awful.util.getdir("cache") .. "/history_tags", nil, function () awful.hooks.user.call("tags", scr) end)
 end
 
 function tag_new()
@@ -130,7 +126,7 @@ function tag_add(args)
     local mwfact = args.mwfact
     local nmaster = args.nmaster
     local ncol = args.ncol
-    for i,j in pairs(config.tags) do
+    for i,j in ipairs(config.tags) do
             if j.name == args.name then
                 if not layout and j.layout then layout = j.layout end
                 if not icon and j.icon then icon = j.icon end
@@ -170,9 +166,9 @@ function apptag(c)
     local role = c.role
     local match = nil
 
-    for i,a in pairs(config.apps) do
+    for i,a in ipairs(config.apps) do
         if a.match then
-            for k,w in pairs(a.match) do
+            for k,w in ipairs(a.match) do
                 if
                     (role and role:find(w)) or
                     (inst and inst:find(w)) or
@@ -202,7 +198,7 @@ end
 
 function isoccupied(t)
     if not t or not t:clients() then return false end
-    for c in pairs(t:clients()) do return true end
+    for c in ipairs(t:clients()) do return true end
     return false
 end
 
@@ -233,7 +229,7 @@ function taglistlabel(t, args)
         if #cls > 0 and taglist_squares_unsel then
             background = "resize=\"" .. taglist_squares_resize .. "\" image=\"" .. taglist_squares_unsel .. "\""
         end
-        for k, c in pairs(cls) do
+        for k, c in ipairs(cls) do
             if c.urgent then
                 if bg_urgent then bg_color = bg_urgent end
                 if fg_urgent then fg_color = fg_urgent end
@@ -315,7 +311,7 @@ end
 
 function killempty ()
     for s = 1, screen.count() do
-        for i, j in pairs(tags[s]) do
+        for i, j in ipairs(tags[s]) do
             if not isoccupied(j) and not data[j].persist then
                 tag_del(j)
             end
