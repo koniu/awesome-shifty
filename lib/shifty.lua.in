@@ -7,7 +7,6 @@
 
 -- package env
 
-local print = print
 local pairs = pairs
 local freetags = freetags
 local tag = tag
@@ -23,15 +22,15 @@ local widget = widget
 local screen = screen
 local button = button
 local mouse = mouse
-local capi = { screen = screen, hooks = hooks }
+local capi = { screen = screen, hooks = hooks, client = client }
 local beautiful = require("beautiful")
 local awful = require("awful")
 local os = os
---local tags = tags
+local image = image
+local otable = otable
 
 module("shifty")
-
-
+local data = otable()
 
 -- get tag by name
 function name2tag(name, screen)
@@ -122,21 +121,22 @@ end
 function tag_move_right() tag_move(1) end
 function tag_move_left() tag_move(-1) end
 
-function tag_add(name, screen, position, layout)
+function tag_add(name, screen, position, layout, icon)
     local scr = screen or mouse.screen or 1
     local pos = position or #tags[scr]+1
     local layout = nil
     if not layout then
         for i,j in pairs(config.tags) do
             if j.name == name then
-                if j.layout then layout = j.layout end
+                if not layout and j.layout then layout = j.layout end
+                if not icon and j.icon then icon = j.icon end
             end
         end
     end
     if not layout then layout = "max" end
-    --print('add: ', name, pos, layout)
-
     local tag = tag({name = name, screen = scr, layout = layout})
+    data[tag] = {}
+    if icon then data[tag].icon = image(icon) end
     table.insert(tags[scr], pos, tag)
     tags[scr][pos].screen = scr
     if #tags[scr] == 1 then awful.tag.viewonly(tag) end
@@ -148,6 +148,7 @@ function tag_del(tag)
     local sel = awful.tag.selected(scr)
     local t = tag or sel
     table.remove(tags[scr], tag2index(t))
+    data[t] = nil
     t.screen = nil
     if t == sel then awful.tag.history.restore(scr) end
 end
@@ -194,6 +195,49 @@ function isoccupied(t)
     return false
 end
 
+function taglistlabel(t, args)
+    if not args then args = {} end
+    local fg_focus = args.fg_focus or beautiful.taglist_fg_focus or beautiful.fg_focus
+    local bg_focus = args.bg_focus or beautiful.taglist_bg_focus or beautiful.bg_focus
+    local fg_urgent = args.fg_urgent or beautiful.taglist_fg_urgent or beautiful.fg_urgent
+    local bg_urgent = args.bg_urgent or beautiful.taglist_bg_urgent or beautiful.bg_urgent
+    local taglist_squares_sel = args.squares_sel or beautiful.taglist_squares_sel
+    local taglist_squares_unsel = args.squares_unsel or beautiful.taglist_squares_unsel
+    local taglist_squares_resize = beautiful.taglist_squares_resize or args.squares_resize or "true"
+    local text
+    local background = ""
+    local sel = capi.client.focus
+    local bg_color = nil
+    local fg_color = nil
+    if t.selected then
+        bg_color = bg_focus
+        fg_color = fg_focus
+    end
+    if sel and sel:tags()[t] then
+        if taglist_squares_sel then
+            background = "resize=\"" .. taglist_squares_resize .. "\" image=\"" .. taglist_squares_sel .. "\""
+        end
+    else
+        local cls = t:clients()
+        if #cls > 0 and taglist_squares_unsel then
+            background = "resize=\"" .. taglist_squares_resize .. "\" image=\"" .. taglist_squares_unsel .. "\""
+        end
+        for k, c in pairs(cls) do
+            if c.urgent then
+                if bg_urgent then bg_color = bg_urgent end
+                if fg_urgent then fg_color = fg_urgent end
+                break
+            end
+        end
+    end
+    if bg_color and fg_color then
+        text = "<bg "..background.." color='"..bg_color.."'/> <span color='"..awful.util.color_strip_alpha(fg_color).."'>"..awful.util.escape(t.name).."</span> "
+    else
+        text = " <bg "..background.." />"..awful.util.escape(t.name).." "
+    end
+    return text, bg_color
+end
+
 function taglistnew(scr, label, buttons)
     local w = {}
     local function taglist_update (screen)
@@ -203,21 +247,29 @@ function taglistnew(scr, label, buttons)
         -- Hack: if it has been registered as a widget in a wibox,
         -- it's w.len since __len meta does not work on table until Lua 5.2.
         -- Otherwise it's standard #w.
-        local len = w.len or #w
+        local len = (w.len or #w)/2
         -- Add more widgets
         if len < #tags then
-            for i = len + 1, #tags do
-                w[i] = widget({ type = "textbox", name = "taglist" .. i })
+            for i = 2*len + 1, 2*#tags, 2 do
+                w[i] = widget({ type = "imagebox", name = "taglisti" .. i })
+                w[i+1] = widget({ type = "textbox", name = "taglist" .. i })
             end
         -- Remove widgets
         elseif len > #tags then
-            for i = #tags, len do
+            for i = 2*#tags, 2*len,2 do
                 w[i] = nil
+                w[i+1] = nil
             end
         end
         -- Update widgets text
-        for k, tag in ipairs(tags) do
-            w[k].text = label(tag)
+        for k = 1, 2*#tags,2 do
+                local a, b = label(tags[(k+1)/2])
+                if data[tags[(k+1)/2]] and data[tags[(k+1)/2]].icon then
+                    w[k].image = data[tags[(k+1)/2]].icon
+                    --w[k].image = image(ikona)
+                    w[k].bg = b
+                end
+                w[k+1].text = a
             if buttons then
                 -- Replace press function by a new one calling with tags as
                 -- argument.
@@ -229,6 +281,7 @@ function taglistnew(scr, label, buttons)
                     mbuttons[kb].press = function () b.press(tag) end
                 end
                 w[k]:buttons(mbuttons)
+                w[k+1]:buttons(mbuttons)
             end
         end
     end
