@@ -125,11 +125,13 @@ function tag_add(name, screen, position, layout, icon)
     local scr = screen or mouse.screen or 1
     local pos = position or #tags[scr]+1
     local layout = nil
+    local notext = nil
     if not layout then
         for i,j in pairs(config.tags) do
             if j.name == name then
                 if not layout and j.layout then layout = j.layout end
                 if not icon and j.icon then icon = j.icon end
+                if j.notext then notext = true end
             end
         end
     end
@@ -137,6 +139,7 @@ function tag_add(name, screen, position, layout, icon)
     if not name or name == "" then name = "__notext" end
     local tag = tag({name = name, layout = layout})
     data[tag] = {}
+    data[tag].notext = notext
     if icon then data[tag].icon = image(icon) end
     table.insert(tags[scr], pos, tag)
     tags[scr][pos].screen = scr
@@ -269,7 +272,7 @@ function taglistnew(scr, label, buttons)
                     w[k].image = data[tags[(k+1)/2]].icon
                     w[k].bg = b
                 end
-                if tags[(k+1)/2].name ~= "__notext" then
+                if tags[(k+1)/2].name ~= "__notext" and not data[tags[(k+1)/2]].notext then
                    w[k+1].text = a
                 end
             if buttons then
