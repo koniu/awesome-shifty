@@ -120,10 +120,9 @@ end
 function tag_move_right() tag_move(1) end
 function tag_move_left() tag_move(-1) end
 
-function tag_add(name, screen, position, layout, icon)
+function tag_add(name, screen, position, layout, icon, persist)
     local scr = screen or mouse.screen or 1
     local pos = position or #tags[scr]+1
-    local layout = nil
     local notext = nil
     if not layout then
         for i,j in pairs(config.tags) do
@@ -131,6 +130,7 @@ function tag_add(name, screen, position, layout, icon)
                 if not layout and j.layout then layout = j.layout end
                 if not icon and j.icon then icon = j.icon end
                 if j.notext then notext = true end
+                if j.persist then persist = true end
             end
         end
     end
@@ -139,6 +139,7 @@ function tag_add(name, screen, position, layout, icon)
     local tag = tag({name = name, layout = layout})
     data[tag] = {}
     data[tag].notext = notext
+    data[tag].persist = persist
     if icon then data[tag].icon = image(icon) end
     table.insert(tags[scr], pos, tag)
     tags[scr][pos].screen = scr
@@ -308,7 +309,7 @@ end
 function killempty ()
     for s = 1, screen.count() do
         for i, j in pairs(tags[s]) do
-            if not isoccupied(j) then
+            if not isoccupied(j) and not data[j].persist then
                 tag_del(j)
             end
         end
