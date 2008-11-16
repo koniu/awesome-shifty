@@ -134,7 +134,8 @@ function tag_add(name, screen, position, layout, icon)
         end
     end
     if not layout then layout = "max" end
-    local tag = tag({name = name, screen = scr, layout = layout})
+    if not name or name == "" then name = "__notext" end
+    local tag = tag({name = name, layout = layout})
     data[tag] = {}
     if icon then data[tag].icon = image(icon) end
     table.insert(tags[scr], pos, tag)
@@ -266,10 +267,11 @@ function taglistnew(scr, label, buttons)
                 local a, b = label(tags[(k+1)/2])
                 if data[tags[(k+1)/2]] and data[tags[(k+1)/2]].icon then
                     w[k].image = data[tags[(k+1)/2]].icon
-                    --w[k].image = image(ikona)
                     w[k].bg = b
                 end
-                w[k+1].text = a
+                if tags[(k+1)/2].name ~= "__notext" then
+                   w[k+1].text = a
+                end
             if buttons then
                 -- Replace press function by a new one calling with tags as
                 -- argument.
