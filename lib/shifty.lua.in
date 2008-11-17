@@ -167,6 +167,7 @@ function tag_del(tag)
     local sel = awful.tag.selected(scr)
     local t = tag or sel
     local idx = tag2index(t)
+    if #(t:clients()) > 0 then return end
     table.remove(tags[scr], idx)
     data[t] = nil
     t.screen = nil
@@ -210,12 +211,6 @@ function apptag(c)
         awful.client.movetotag(target, c)
         awful.tag.viewonly(target)
     end
-end
-
-function isoccupied(t)
-    if not t or not t:clients() then return false end
-    for c in ipairs(t:clients()) do return true end
-    return false
 end
 
 function taglistlabel(t, args)
@@ -328,7 +323,7 @@ end
 function killempty ()
     for s = 1, screen.count() do
         for i, j in ipairs(tags[s]) do
-            if not isoccupied(j) and not data[j].persist then
+            if not (#(j:clients()) > 0) and not data[j].persist then
                 tag_del(j)
             end
         end
