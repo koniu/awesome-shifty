@@ -330,4 +330,8 @@ for s = 1, screen.count() do
     tags[s] = {}
 end
 
+for i, j in ipairs(config.tags) do
+    if j.init then tag_add({name = j.name, persist = true}) end
+end
+
 -- vim: filetype=lua:expandtab:shiftwidth=4:tabstop=8:softtabstop=4:encoding=utf-8:textwidth=80
