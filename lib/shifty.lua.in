@@ -1,8 +1,7 @@
 --- Shifty: Dynamic tagging library for awesome3-git
 -- @author koniu &lt;gkusnierz@gmail.com&gt;
-
--- todo:
---  more windowmatching with sizing and stuff + include scrollclient() / maybe separate module
+--
+-- http://awesome.naquadah.org/wiki/index.php?title=Shifty
 
 -- package env
 
@@ -27,7 +26,6 @@ local otable = otable
 module("shifty")
 local data = otable()
 
--- get tag by name
 function name2tag(name, screen)
     local a, b = screen or 1, screen or screen.count()
     for s = a, b do
@@ -38,7 +36,6 @@ function name2tag(name, screen)
     end
 end
 
--- get index by tag
 function tag2index(tag)
     for i, t in ipairs(tags[tag.screen]) do
         if tag == t then return i end
@@ -322,7 +319,6 @@ function killempty ()
 end
 
 awful.hooks.clients.register(killempty)
---awful.hooks.arrange.register(killempty)
 awful.hooks.manage.register(apptag)
 
 
