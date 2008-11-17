@@ -22,9 +22,6 @@ local beautiful = require("beautiful")
 local awful = require("awful")
 local image = image
 local otable = otable
-local math = math
-local keybinding = keybinding
-local modkey = modkey
 local pairs = pairs
 
 module("shifty")
@@ -347,7 +344,6 @@ function tag_modidx(pos, screen)
     end
     local t = tag_add({ name = pos , position = pos })
     tag_rename(t, pos .. ":")
-
 end
 
 awful.hooks.clients.register(killempty)
