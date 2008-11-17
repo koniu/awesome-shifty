@@ -166,10 +166,14 @@ function tag_del(tag)
     local scr = (tag and tag.screen) or mouse.screen or 1
     local sel = awful.tag.selected(scr)
     local t = tag or sel
-    table.remove(tags[scr], tag2index(t))
+    local idx = tag2index(t)
+    table.remove(tags[scr], idx)
     data[t] = nil
     t.screen = nil
-    if t == sel then awful.tag.history.restore(scr) end
+    if t == sel then
+        awful.tag.history.restore(scr)
+        if not awful.tag.selected(scr) then awful.tag.viewonly(tags[scr][idx-1])  end
+    end
 end
 
 function apptag(c)
