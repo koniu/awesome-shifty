@@ -126,6 +126,7 @@ function tag_add(args)
     local mwfact = args.mwfact
     local nmaster = args.nmaster
     local ncol = args.ncol
+    local pos = nil
     for i,j in ipairs(config.tags) do
             if j.name == args.name then
                 if not layout and j.layout then layout = j.layout end
@@ -136,9 +137,10 @@ function tag_add(args)
                 if not nmaster and j.nmaster then nmaster = j.nmaster end
                 if not ncol and j.ncol then ncol = j.ncol end
                 if not args.screen and j.screen then scr = j.screen end
+                pos = args.position or j.position
             end
     end
-    local pos = args.position or #tags[scr]+1
+    if not pos then pos = #tags[scr]+1 end
     local tag = tag({ name = name, layout = layout, nmaster = nmaster, mwfact = mwfact, ncol = ncol })
     data[tag] = {}
     data[tag].notext = notext
