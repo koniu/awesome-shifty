@@ -172,7 +172,7 @@ function tag_del(tag)
     t.screen = nil
     if t == sel then
         awful.tag.history.restore(scr)
-        if not awful.tag.selected(scr) then awful.tag.viewonly(tags[scr][idx-1])  end
+        if not awful.tag.selected(scr) then awful.tag.viewonly(tags[scr][awful.util.cycle(#tags[scr], idx - 1)])  end
     end
 end
 
