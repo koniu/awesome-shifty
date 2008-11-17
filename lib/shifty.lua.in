@@ -22,8 +22,13 @@ local beautiful = require("beautiful")
 local awful = require("awful")
 local image = image
 local otable = otable
+local math = math
+local keybinding = keybinding
+local modkey = modkey
+local pairs = pairs
 
 module("shifty")
+
 local data = otable()
 
 function name2tag(name, screen)
@@ -66,10 +71,11 @@ function tag_prev(screen)
     viewidx(-1, scr)
 end
 
-function tag_rename(tag)
-    local scr = (t and t.screen) or mouse.screen or 1
+function tag_rename(tag, prefix)
+    local scr = mouse.screen or 1
     local t = tag or awful.tag.selected(scr)
     local bg = nil
+    local text = prefix or t.name
     if t == awful.tag.selected(scr) then bg = beautiful.bg_focus or '#535d6c'
         else bg = beautiful.bg_normal or '#222222' end
 
@@ -77,6 +83,7 @@ function tag_rename(tag)
         fg_cursor = "orange",
         bg_cursor = bg,
         ul_cursor="single",
+        text = text,
         prompt = '<bg color="'..bg..'" /> ' },
         taglist[scr][tag2index(t) * 2],
         function (name) if name:len() > 0 then t.name = name end end, nil,
@@ -85,7 +92,7 @@ end
 
 function tag_new()
     local t = tag_add({ name = 'new' })
-    tag_rename(t)
+    tag_rename(t,"")
 end
 
 function tag_send(idx)
@@ -330,6 +337,19 @@ function killempty ()
     end
 end
 
+function tag_modidx(pos, screen)
+    local scr = screen or mouse.screen or 1
+    for t, d in pairs(data) do
+        if t and d.position == pos then awful.tag.viewonly(t); return end
+    end
+    for i, j in ipairs(config.tags) do
+        if j.position == pos then tag_add({ name = j.name, screen = j.screen }); return end
+    end
+    local t = tag_add({ name = pos , position = pos })
+    tag_rename(t, pos .. ":")
+
+end
+
 awful.hooks.clients.register(killempty)
 awful.hooks.manage.register(apptag)
 
@@ -343,5 +363,6 @@ end
 for i, j in ipairs(config.tags) do
     if j.init then tag_add({name = j.name, persist = true, screen = j.screen}) end
 end
+
 
 -- vim: filetype=lua:expandtab:shiftwidth=4:tabstop=8:softtabstop=4:encoding=utf-8:textwidth=80
