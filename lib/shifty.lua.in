@@ -290,7 +290,7 @@ function taglistnew(scr, label, buttons)
                 for kb, b in ipairs(buttons) do
                     -- Copy object
                     mbuttons[kb] = button(b)
-                    mbuttons[kb].press = function () b.press(tag) end
+                    mbuttons[kb].press = function () b.press(tags[(k+1)/2]) end
                 end
                 w[k]:buttons(mbuttons)
                 w[k+1]:buttons(mbuttons)
