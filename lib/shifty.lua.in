@@ -116,7 +116,7 @@ function tag_move_left() tag_move(-1) end
 function tag_add(args)
     local name = args.name or "__notext"
     local scr = args.screen or mouse.screen or 1
-    local layout = args.layout or "max"
+    local layout = args.layout
     local icon = args.icon
     local notext = args.notext
     local persist = args.persist
