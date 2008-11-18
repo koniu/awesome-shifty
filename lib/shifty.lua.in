@@ -6,7 +6,6 @@
 -- package env
 
 local tag = tag
-local config = config
 local ipairs = ipairs
 local table = table
 local client = client
@@ -26,7 +25,13 @@ local pairs = pairs
 
 module("shifty")
 
+tags = {}
+config = {}
+config.tags = {}
+config.apps = {}
+for s = 1, screen.count() do tags[s] = {} end
 local data = otable()
+
 
 function name2tag(name, screen)
     local a, b = screen or 1, screen or screen.count()
@@ -42,10 +47,10 @@ function tag2index(tag)
     for i, t in ipairs(tags[tag.screen]) do
         if tag == t then return i end
     end
-    return nil
 end
 
 function viewidx(i, screen)
+    local screen = screen or mouse.screen or 1
     local tags = tags[screen]
     local sel = awful.tag.selected()
     awful.tag.viewnone()
@@ -56,19 +61,10 @@ function viewidx(i, screen)
     end
 end
 
-function tag_next(screen)
-    local scr = screen or mouse.screen or 1
-    local cur = awful.tag.selected(scr)
-    viewidx(1, scr)
-end
+function next() viewidx(1) end
+function prev() viewidx(-1) end
 
-function tag_prev(screen)
-    local scr = screen or mouse.screen or 1
-    local cur = awful.tag.selected(scr)
-    viewidx(-1, scr)
-end
-
-function tag_rename(tag, prefix)
+function rename(tag, prefix)
     local scr = mouse.screen or 1
     local t = tag or awful.tag.selected(scr)
     local bg = nil
@@ -87,37 +83,39 @@ function tag_rename(tag, prefix)
         awful.util.getdir("cache") .. "/history_tags", nil, function () awful.hooks.user.call("tags", scr) end)
 end
 
-function tag_new()
-    local t = tag_add({ name = 'new' })
-    tag_rename(t,"")
+function new(focus)
+    local t = add({ name = 'new' })
+    rename(t,"")
+    if t.name == 'new' then tag_del(t) end
+    if focus then awful.tag.viewonly(t) end
 end
 
-function tag_send(idx)
+function send(idx)
     local scr = client.focus.screen or mouse.screen
-    local cur = awful.tag.selected(scr)
-    local curidx = tag2index(cur)
-    local target = awful.util.cycle(#tags[scr], curidx + idx)
+    local sel = awful.tag.selected(scr)
+    local sel_idx = tag2index(sel)
+    local target = awful.util.cycle(#tags[scr], sel_idx + idx)
     awful.tag.viewonly(tags[scr][target])
     awful.client.movetotag(tags[scr][target], client.focus)
 end
 
-function tag_send_next() tag_send(1) end
-function tag_send_prev() tag_send(-1) end
+function send_next() send(1) end
+function send_prev() send(-1) end
 
-function tag_move(idx)
+function shift(idx)
     local scr = mouse.screen or 1
-    local cur = awful.tag.selected(scr)
-    local curidx = tag2index(cur)
-    local target = awful.util.cycle(#tags[scr], curidx + idx)
-    table.remove(tags[scr], curidx)
-    table.insert(tags[scr], target, cur)
+    local sel = awful.tag.selected(scr)
+    local sel_idx = tag2index(sel)
+    local target = awful.util.cycle(#tags[scr], sel_idx + idx)
+    table.remove(tags[scr], sel_idx)
+    table.insert(tags[scr], target, sel)
     awful.hooks.user.call("tags", scr)
 end
 
-function tag_move_right() tag_move(1) end
-function tag_move_left() tag_move(-1) end
+function shift_next() shift(1) end
+function shift_prev() shift(-1) end
 
-function tag_add(args)
+function add(args)
     local name = args.name or "__notext"
     local scr = args.screen or mouse.screen or 1
     local layout = args.layout
@@ -143,30 +141,30 @@ function tag_add(args)
     end
     local tag = tag({ name = name, layout = layout, nmaster = nmaster, mwfact = mwfact, ncol = ncol })
 
-    local pos = nil
+    local idx = nil
     if position then
-    for i, t in ipairs(tags[scr]) do
-        if not data[t].position or data[t].position > position then
-            pos = i
-            break
+        for i, t in ipairs(tags[scr]) do
+            if not data[t].position or data[t].position > position then
+                idx = i
+                break
+            end
         end
     end
-    end
-    if not pos then pos = #tags[scr] + 1 end
+    if not idx then idx = #tags[scr] + 1 end
 
     data[tag] = {}
     data[tag].position = position
     data[tag].notext = notext
     data[tag].persist = persist
-
     if icon then data[tag].icon = image(icon) end
-    table.insert(tags[scr], pos, tag)
-    tags[scr][pos].screen = scr
+
+    table.insert(tags[scr], idx, tag)
+    tags[scr][idx].screen = scr
     if #tags[scr] == 1 then awful.tag.viewonly(tag) end
     return tag
 end
 
-function tag_del(tag)
+function del(tag)
     local scr = (tag and tag.screen) or mouse.screen or 1
     local sel = awful.tag.selected(scr)
     local t = tag or sel
@@ -181,15 +179,15 @@ function tag_del(tag)
     end
 end
 
-function apptag(c)
+function match(c)
     local cls = c.class
     local inst = c.instance
     local role = c.role
     local match = nil
 
-    for i,a in ipairs(config.apps) do
+    for i, a in ipairs(config.apps) do
         if a.match then
-            for k,w in ipairs(a.match) do
+            for k, w in ipairs(a.match) do
                 if
                     (role and role:find(w)) or
                     (inst and inst:find(w)) or
@@ -199,7 +197,7 @@ function apptag(c)
                     if a.screen and a.screen ~= c.screen and a.screen <= screen.count()
                         then c.screen = a.screen end
                     if a.tag then
-                        local target = name2tag(a.tag, c.screen) or tag_add({ name = a.tag, screen = c.screen })
+                        local target = name2tag(a.tag, c.screen) or add({ name = a.tag, screen = c.screen })
                         awful.client.movetotag(target, c)
                         if not a.nopopup and target ~= awful.tag.selected(target.screen) then
                             awful.tag.viewonly(target)
@@ -211,13 +209,13 @@ function apptag(c)
     end
 
     if not match and #tags[c.screen] == 0 then 
-        local target = tag_add({ name = 'new', screen = c.screen })
+        local target = add({ name = 'new', screen = c.screen })
         awful.client.movetotag(target, c)
         awful.tag.viewonly(target)
     end
 end
 
-function taglistlabel(t, args)
+function taglist_label(t, args)
     if not args then args = {} end
     local fg_focus = args.fg_focus or beautiful.taglist_fg_focus or beautiful.fg_focus
     local bg_focus = args.bg_focus or beautiful.taglist_bg_focus or beautiful.bg_focus
@@ -260,7 +258,7 @@ function taglistlabel(t, args)
     return text, bg_color
 end
 
-function taglistnew(scr, label, buttons)
+function taglist_new(scr, label, buttons)
     local w = {}
     local function taglist_update (screen)
         -- Return right now if we do not care about this screen
@@ -324,41 +322,38 @@ function taglistnew(scr, label, buttons)
     return w
 end
 
-function killempty ()
+function sweep()
     for s = 1, screen.count() do
-        for i, j in ipairs(tags[s]) do
-            if not (#(j:clients()) > 0) and not data[j].persist then
-                tag_del(j)
+        for i, t in ipairs(tags[s]) do
+            if not (#(t:clients()) > 0) and not data[t].persist then
+                del(t)
             end
         end
     end
 end
 
-function tag_modidx(pos, screen)
+function viewpos(pos, screen)
+    local t = nil
     local scr = screen or mouse.screen or 1
     for t, d in pairs(data) do
-        if t and d.position == pos then awful.tag.viewonly(t); return end
+        if t and d.position == pos then awful.tag.viewonly(t); return t end
     end
     for i, j in ipairs(config.tags) do
-        if j.position == pos then tag_add({ name = j.name, screen = j.screen }); return end
+        if j.position == pos then t = add({ name = j.name, screen = j.screen }); return t end
     end
-    local t = tag_add({ name = pos , position = pos })
-    tag_rename(t, pos .. ":")
+    local t = add({ name = pos , position = pos })
+    rename(t, pos .. ":")
+    return t
 end
 
-awful.hooks.clients.register(killempty)
-awful.hooks.manage.register(apptag)
-
-
-tags = {}
-
-for s = 1, screen.count() do
-    tags[s] = {}
+function init()
+    for i, j in ipairs(config.tags) do
+        if j.init then add({name = j.name, persist = true, screen = j.screen}) end
+    end
 end
 
-for i, j in ipairs(config.tags) do
-    if j.init then tag_add({name = j.name, persist = true, screen = j.screen}) end
-end
-
+awful.hooks.clients.register(sweep)
+awful.hooks.arrange.register(sweep)
+awful.hooks.manage.register(match)
 
 -- vim: filetype=lua:expandtab:shiftwidth=4:tabstop=8:softtabstop=4:encoding=utf-8:textwidth=80
