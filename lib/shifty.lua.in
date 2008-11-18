@@ -83,11 +83,9 @@ function rename(tag, prefix)
         awful.util.getdir("cache") .. "/history_tags", nil, function () awful.hooks.user.call("tags", scr) end)
 end
 
-function new(focus)
-    local t = add({ name = 'new' })
-    rename(t,"")
-    if t.name == 'new' then tag_del(t) end
-    if focus then awful.tag.viewonly(t) end
+function new(nopopup)
+    local t = add({ name = 'new', nopopup = nopopup })
+    rename(t, "")
 end
 
 function send(idx)
@@ -126,6 +124,7 @@ function add(args)
     local nmaster = args.nmaster
     local ncol = args.ncol
     local position = args.position
+    local nopopup = args.nopopup
     for i,j in ipairs(config.tags) do
             if j.name == args.name then
                 if not layout and j.layout then layout = j.layout end
@@ -137,6 +136,7 @@ function add(args)
                 if not ncol and j.ncol then ncol = j.ncol end
                 if not args.screen and j.screen then scr = j.screen end
                 if not position and j.position then position = j.position end
+                if not nopopup and j.nopopup then nopopup = j.nopopup end
             end
     end
     local tag = tag({ name = name, layout = layout, nmaster = nmaster, mwfact = mwfact, ncol = ncol })
@@ -156,11 +156,12 @@ function add(args)
     data[tag].position = position
     data[tag].notext = notext
     data[tag].persist = persist
+    data[tag].nopopup = nopopup
     if icon then data[tag].icon = image(icon) end
 
     table.insert(tags[scr], idx, tag)
     tags[scr][idx].screen = scr
-    if #tags[scr] == 1 then awful.tag.viewonly(tag) end
+    if not nopopup or #tags[scr] == 1 then awful.tag.viewonly(tag) end
     return tag
 end
 
@@ -199,7 +200,7 @@ function match(c)
                     if a.tag then
                         local target = name2tag(a.tag, c.screen) or add({ name = a.tag, screen = c.screen })
                         awful.client.movetotag(target, c)
-                        if not a.nopopup and target ~= awful.tag.selected(target.screen) then
+                        if (not data[target].nopopup and not a.nopopup) and target ~= awful.tag.selected(target.screen) then
                             awful.tag.viewonly(target)
                         end
                     end
@@ -353,7 +354,7 @@ function init()
 end
 
 awful.hooks.clients.register(sweep)
-awful.hooks.arrange.register(sweep)
+--awful.hooks.arrange.register(sweep)
 awful.hooks.manage.register(match)
 
 -- vim: filetype=lua:expandtab:shiftwidth=4:tabstop=8:softtabstop=4:encoding=utf-8:textwidth=80
