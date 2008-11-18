@@ -33,8 +33,8 @@ for s = 1, screen.count() do tags[s] = {} end
 local data = otable()
 
 
-function name2tag(name, screen)
-    local a, b = screen or 1, screen or screen.count()
+function name2tag(name, scr)
+    local a, b = scr or 1, scr or screen.count()
     for s = a, b do
         for i, t in ipairs(tags[s]) do
             if name == t.name then
