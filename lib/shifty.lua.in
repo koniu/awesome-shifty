@@ -67,12 +67,13 @@ function next() viewidx(1) end
 function prev() viewidx(-1) end
 
 function rename(tag, prefix, no_selectall)
+    local theme = beautiful.get()
     local scr = mouse.screen or 1
     local t = tag or awful.tag.selected(scr)
     local bg = nil
     local text = prefix or t.name or ""
-    if t == awful.tag.selected(scr) then bg = beautiful.bg_focus or '#535d6c'
-        else bg = beautiful.bg_normal or '#222222' end
+    if t == awful.tag.selected(scr) then bg = theme.bg_focus or '#535d6c'
+        else bg = theme.bg_normal or '#222222' end
 
     awful.prompt.run({
         fg_cursor = "orange",
@@ -212,13 +213,14 @@ end
 
 function taglist_label(t, args)
     if not args then args = {} end
-    local fg_focus = args.fg_focus or beautiful.taglist_fg_focus or beautiful.fg_focus
-    local bg_focus = args.bg_focus or beautiful.taglist_bg_focus or beautiful.bg_focus
-    local fg_urgent = args.fg_urgent or beautiful.taglist_fg_urgent or beautiful.fg_urgent
-    local bg_urgent = args.bg_urgent or beautiful.taglist_bg_urgent or beautiful.bg_urgent
-    local taglist_squares_sel = args.squares_sel or beautiful.taglist_squares_sel
-    local taglist_squares_unsel = args.squares_unsel or beautiful.taglist_squares_unsel
-    local taglist_squares_resize = beautiful.taglist_squares_resize or args.squares_resize or "true"
+    local theme = beautiful.get()
+    local fg_focus = args.fg_focus or theme.taglist_fg_focus or theme.fg_focus
+    local bg_focus = args.bg_focus or theme.taglist_bg_focus or theme.bg_focus
+    local fg_urgent = args.fg_urgent or theme.taglist_fg_urgent or theme.fg_urgent
+    local bg_urgent = args.bg_urgent or theme.taglist_bg_urgent or theme.bg_urgent
+    local taglist_squares_sel = args.squares_sel or theme.taglist_squares_sel
+    local taglist_squares_unsel = args.squares_unsel or theme.taglist_squares_unsel
+    local taglist_squares_resize = theme.taglist_squares_resize or args.squares_resize or "true"
     local text
     local background = ""
     local sel = capi.client.focus
