@@ -66,11 +66,11 @@ end
 function next() viewidx(1) end
 function prev() viewidx(-1) end
 
-function rename(tag, prefix)
+function rename(tag, prefix, no_selectall)
     local scr = mouse.screen or 1
     local t = tag or awful.tag.selected(scr)
     local bg = nil
-    local text = prefix or t.name
+    local text = prefix or t.name or ""
     if t == awful.tag.selected(scr) then bg = beautiful.bg_focus or '#535d6c'
         else bg = beautiful.bg_normal or '#222222' end
 
@@ -79,6 +79,7 @@ function rename(tag, prefix)
         bg_cursor = bg,
         ul_cursor="single",
         text = text,
+        selectall = not no_selectall,
         prompt = '<bg color="'..bg..'" /> ' },
         taglist[scr][tag2index(t) * 2],
         function (name) if name:len() > 0 then t.name = name end end, nil,
@@ -153,7 +154,7 @@ function add(args)
     table.insert(tags[scr], idx, tag)
     tags[scr][idx].screen = scr
     if not nopopup or #tags[scr] == 1 then awful.tag.viewonly(tag) end
-    if args.rename or name == "" then rename(tag, args.rename) end
+    if args.rename or name == "" then rename(tag, args.rename, args.no_selectall) end
     return tag
 end
 
@@ -348,7 +349,7 @@ function getpos(pos, switch)
         end
     end
     if not v then
-        v = add({ name = pos, position = pos, rename = pos .. ':' })
+        v = add({ name = pos, position = pos, rename = pos .. ':', no_selectall = true })
     end
     if switch then awful.tag.viewonly(v) end
     return v
