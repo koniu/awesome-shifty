@@ -30,6 +30,7 @@ config = {}
 config.tags = {}
 config.apps = {}
 config.defaults = {}
+config.guess = true
 for s = 1, screen.count() do tags[s] = {} end
 local data = otable()
 
@@ -175,6 +176,7 @@ function match(c)
     local cls = c.class
     local inst = c.instance
     local role = c.role
+    local name = nil
     local match = nil
 
     for i, a in ipairs(config.apps) do
@@ -201,7 +203,8 @@ function match(c)
     end
 
     if not match and (#tags[c.screen] == 0 or data[awful.tag.selected()].exclusive) then
-        local target = add({ name = 'new', screen = c.screen })
+        if config.guess and cls then name = cls:lower() else name = "new" end
+        local target = add({ name = name, screen = c.screen })
         awful.client.movetotag(target, c)
         awful.tag.viewonly(target)
     end
