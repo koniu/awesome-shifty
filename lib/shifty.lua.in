@@ -321,8 +321,8 @@ function sweep()
     for s = 1, screen.count() do
         for i, t in ipairs(tags[s]) do
             if #t:clients() == 0 then
-                if not data[t].persist then
-                    if data[t].deserted or (not data[t].leave_kills and data[t].used) then
+                if not data[t].persist and data[t].used then
+                    if data[t].deserted or not data[t].leave_kills then
                         del(t)
                     else
                         if not t.selected and data[t].visited then data[t].deserted = true end
