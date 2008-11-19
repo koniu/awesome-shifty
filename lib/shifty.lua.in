@@ -166,7 +166,7 @@ function del(tag)
     table.remove(tags[scr], idx)
     data[t] = nil
     t.screen = nil
-    if t == sel then
+    if t == sel and #tags[scr] > 0 then
         awful.tag.history.restore(scr)
         if not awful.tag.selected(scr) then awful.tag.viewonly(tags[scr][awful.util.cycle(#tags[scr], idx - 1)])  end
     end
