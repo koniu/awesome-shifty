@@ -81,11 +81,7 @@ function rename(tag, prefix)
         taglist[scr][tag2index(t) * 2],
         function (name) if name:len() > 0 then t.name = name end end, nil,
         awful.util.getdir("cache") .. "/history_tags", nil, function () awful.hooks.user.call("tags", scr) end)
-end
 
-function new(nopopup)
-    local t = add({ name = 'new', nopopup = nopopup })
-    rename(t, "")
 end
 
 function send(idx)
@@ -125,6 +121,7 @@ function add(args)
     local ncol = args.ncol
     local position = args.position
     local nopopup = args.nopopup
+    local leave_kills = args.leave_kills
     for i,j in ipairs(config.tags) do
             if j.name == args.name then
                 if not layout and j.layout then layout = j.layout end
@@ -137,6 +134,7 @@ function add(args)
                 if not args.screen and j.screen then scr = j.screen end
                 if not position and j.position then position = j.position end
                 if not nopopup and j.nopopup then nopopup = j.nopopup end
+                if not leave_kills and j.leave_kills then leave_kills = j.leave_kills end
             end
     end
     local tag = tag({ name = name, layout = layout, nmaster = nmaster, mwfact = mwfact, ncol = ncol })
@@ -157,11 +155,13 @@ function add(args)
     data[tag].notext = notext
     data[tag].persist = persist
     data[tag].nopopup = nopopup
+    data[tag].leave_kills = leave_kills
     if icon then data[tag].icon = image(icon) end
 
     table.insert(tags[scr], idx, tag)
     tags[scr][idx].screen = scr
     if not nopopup or #tags[scr] == 1 then awful.tag.viewonly(tag) end
+    if args.rename then rename(tag) end
     return tag
 end
 
@@ -326,9 +326,18 @@ end
 function sweep()
     for s = 1, screen.count() do
         for i, t in ipairs(tags[s]) do
-            if not (#(t:clients()) > 0) and not data[t].persist then
-                del(t)
+            if #t:clients() == 0 then
+                if not data[t].persist then
+                    if data[t].deserted or (not data[t].leave_kills and data[t].used) then
+                        del(t)
+                    else
+                        if not t.selected and data[t].visited then data[t].deserted = true end
+                    end
+                end
+            else
+                data[t].used = true
             end
+            if t.selected then data[t].visited = true end
         end
     end
 end
@@ -353,8 +362,8 @@ function init()
     end
 end
 
-awful.hooks.clients.register(sweep)
---awful.hooks.arrange.register(sweep)
+awful.hooks.tags.register(sweep)
+awful.hooks.arrange.register(sweep)
 awful.hooks.manage.register(match)
 
 -- vim: filetype=lua:expandtab:shiftwidth=4:tabstop=8:softtabstop=4:encoding=utf-8:textwidth=80
