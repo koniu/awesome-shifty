@@ -152,7 +152,7 @@ function add(args)
 
     table.insert(tags[scr], idx, tag)
     tags[scr][idx].screen = scr
-    if not nopopup or #tags[scr] == 1 then awful.tag.viewonly(tag) end
+    if (not nopopup and not args.noswitch) or #tags[scr] == 1 then awful.tag.viewonly(tag) end
     if args.rename or name == "" then rename(tag, args.rename, args.no_selectall) end
     return tag
 end
@@ -344,11 +344,11 @@ function getpos(pos, switch)
     end
     if not v then
         for i, j in pairs(config.tags) do
-            if j.position == pos then v = add({ name = i, screen = j.screen, }) end
+            if j.position == pos then v = add({ name = i, screen = j.screen, noswitch = not switch }) end
         end
     end
     if not v then
-        v = add({ position = pos, rename = pos .. ':', no_selectall = true })
+        v = add({ position = pos, rename = pos .. ':', no_selectall = true, noswitch = not switch })
     end
     if switch then awful.tag.viewonly(v) end
     return v
