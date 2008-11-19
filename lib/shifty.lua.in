@@ -113,7 +113,7 @@ function shift_prev() shift(-1) end
 function add(args)
     if not args then args = {} end
     local name = args.name or ""
-    local layout, icon, notext, persist, mwfact, nmaster, ncol, position, nopopup, leave_kills, idx = nil
+    local layout, icon, notext, persist, mwfact, nmaster, ncol, position, nopopup, leave_kills, idx, scr = nil
     local preset = config.tags[name] or {}
 
     layout = args.layout or preset.layout or config.defaults.layout
@@ -332,18 +332,22 @@ function sweep()
     end
 end
 
-function viewpos(pos, screen)
-    local t = nil
+function getpos(pos, switch)
+    local v = nil
     local scr = screen or mouse.screen or 1
     for t, d in pairs(data) do
-        if t and d.position == pos then awful.tag.viewonly(t); return t end
+        if t and d.position == pos then v = t end
     end
-    for i, j in pairs(config.tags) do
-        if j.position == pos then t = add({ name = i, screen = j.screen }); return t end
+    if not v then
+        for i, j in pairs(config.tags) do
+            if j.position == pos then v = add({ name = i, screen = j.screen, }) end
+        end
     end
-    local t = add({ name = pos , position = pos })
-    rename(t, pos .. ":")
-    return t
+    if not v then
+        v = add({ name = pos, position = pos, rename = true })
+    end
+    if switch then awful.tag.viewonly(v) end
+    return v
 end
 
 function init()
