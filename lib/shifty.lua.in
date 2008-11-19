@@ -113,7 +113,7 @@ function shift_prev() shift(-1) end
 function add(args)
     if not args then args = {} end
     local name = args.name or ""
-    local layout, icon, notext, persist, mwfact, nmaster, ncol, position, nopopup, leave_kills, idx, scr, exclusive = nil
+    local layout, icon, notext, persist, mwfact, nmaster, ncol, position, nopopup, leave_kills, idx, scr = nil
     local preset = config.tags[name] or {}
 
     layout = args.layout or preset.layout or config.defaults.layout
@@ -152,7 +152,7 @@ function add(args)
     table.insert(tags[scr], idx, tag)
     tags[scr][idx].screen = scr
     if not nopopup or #tags[scr] == 1 then awful.tag.viewonly(tag) end
-    if args.rename or name == "" then rename(tag) end
+    if args.rename or name == "" then rename(tag, args.rename) end
     return tag
 end
 
@@ -345,7 +345,7 @@ function getpos(pos, switch)
         end
     end
     if not v then
-        v = add({ name = pos, position = pos, rename = true })
+        v = add({ name = pos, position = pos, rename = pos .. ':' })
     end
     if switch then awful.tag.viewonly(v) end
     return v
@@ -359,6 +359,7 @@ end
 
 awful.hooks.tags.register(sweep)
 awful.hooks.arrange.register(sweep)
+awful.hooks.clients.register(sweep)
 awful.hooks.manage.register(match)
 
 -- vim: filetype=lua:expandtab:shiftwidth=4:tabstop=8:softtabstop=4:encoding=utf-8:textwidth=80
