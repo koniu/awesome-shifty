@@ -113,7 +113,7 @@ function shift_prev() shift(-1) end
 function add(args)
     if not args then args = {} end
     local name = args.name or ""
-    local layout, icon, notext, persist, mwfact, nmaster, ncol, position, nopopup, leave_kills, idx, scr = nil
+    local layout, icon, notext, persist, mwfact, nmaster, ncol, position, nopopup, leave_kills, idx, scr, exclusive = nil
     local preset = config.tags[name] or {}
 
     layout = args.layout or preset.layout or config.defaults.layout
@@ -146,6 +146,7 @@ function add(args)
     data[tag].persist = persist
     data[tag].nopopup = nopopup
     data[tag].leave_kills = leave_kills
+    data[tag].exclusive = preset.exclusive
     if icon then data[tag].icon = image(icon) end
 
     table.insert(tags[scr], idx, tag)
@@ -199,7 +200,7 @@ function match(c)
         end
     end
 
-    if not match and #tags[c.screen] == 0 then 
+    if not match and (#tags[c.screen] == 0 or data[awful.tag.selected()].exclusive) then
         local target = add({ name = 'new', screen = c.screen })
         awful.client.movetotag(target, c)
         awful.tag.viewonly(target)
