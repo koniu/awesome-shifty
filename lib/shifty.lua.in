@@ -29,6 +29,7 @@ tags = {}
 config = {}
 config.tags = {}
 config.apps = {}
+config.defaults = {}
 for s = 1, screen.count() do tags[s] = {} end
 local data = otable()
 
@@ -111,35 +112,23 @@ function shift_prev() shift(-1) end
 
 function add(args)
     local name = args.name or "__notext"
-    local scr = args.screen or mouse.screen or 1
-    local layout = args.layout
-    local icon = args.icon
-    local notext = args.notext
-    local persist = args.persist
-    local mwfact = args.mwfact
-    local nmaster = args.nmaster
-    local ncol = args.ncol
-    local position = args.position
-    local nopopup = args.nopopup
-    local leave_kills = args.leave_kills
-    for i,j in ipairs(config.tags) do
-            if j.name == args.name then
-                if not layout and j.layout then layout = j.layout end
-                if not icon and j.icon then icon = j.icon end
-                if not notext and j.notext then notext = true end
-                if not persist and j.persist then persist = true end
-                if not mwfact and j.mwfact then mwfact = j.mwfact end
-                if not nmaster and j.nmaster then nmaster = j.nmaster end
-                if not ncol and j.ncol then ncol = j.ncol end
-                if not args.screen and j.screen then scr = j.screen end
-                if not position and j.position then position = j.position end
-                if not nopopup and j.nopopup then nopopup = j.nopopup end
-                if not leave_kills and j.leave_kills then leave_kills = j.leave_kills end
-            end
-    end
+    local layout, icon, notext, persist, mwfact, nmaster, ncol, position, nopopup, leave_kills, idx = nil
+    local preset = config.tags[name] or {}
+
+    layout = args.layout or preset.layout or config.defaults.layout
+    icon = args.icon or preset.icon or config.defaults.icon
+    notext = args.notext or preset.notext or config.defaults.notext
+    persist = args.persist or preset.persist or config.defaults.persist
+    mwfact = args.mwfact or preset.mwfact or config.defaults.mwfact
+    nmaster = args.nmaster or preset.nmaster or config.defaults.nmaster
+    ncol = args.ncol or preset.ncol or config.defaults.ncol
+    scr = args.screen or preset.screen or mouse.screen or 1
+    position = args.position or preset.position
+    nopopup = args.nopopup or preset.nopopup or config.defaults.nopopup
+    leave_kills = args.leave_kills or preset.leave_kills or config.defaults.leave_kills
+
     local tag = tag({ name = name, layout = layout, nmaster = nmaster, mwfact = mwfact, ncol = ncol })
 
-    local idx = nil
     if position then
         for i, t in ipairs(tags[scr]) do
             if not data[t].position or data[t].position > position then
@@ -348,8 +337,8 @@ function viewpos(pos, screen)
     for t, d in pairs(data) do
         if t and d.position == pos then awful.tag.viewonly(t); return t end
     end
-    for i, j in ipairs(config.tags) do
-        if j.position == pos then t = add({ name = j.name, screen = j.screen }); return t end
+    for i, j in pairs(config.tags) do
+        if j.position == pos then t = add({ name = i, screen = j.screen }); return t end
     end
     local t = add({ name = pos , position = pos })
     rename(t, pos .. ":")
@@ -357,8 +346,8 @@ function viewpos(pos, screen)
 end
 
 function init()
-    for i, j in ipairs(config.tags) do
-        if j.init then add({name = j.name, persist = true, screen = j.screen}) end
+    for i, j in pairs(config.tags) do
+        if j.init then add({ name = i, persist = true, screen = j.screen }) end
     end
 end
 
