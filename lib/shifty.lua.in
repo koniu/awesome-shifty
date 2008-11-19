@@ -111,7 +111,8 @@ function shift_next() shift(1) end
 function shift_prev() shift(-1) end
 
 function add(args)
-    local name = args.name or "__notext"
+    if not args then args = {} end
+    local name = args.name or ""
     local layout, icon, notext, persist, mwfact, nmaster, ncol, position, nopopup, leave_kills, idx = nil
     local preset = config.tags[name] or {}
 
@@ -150,7 +151,7 @@ function add(args)
     table.insert(tags[scr], idx, tag)
     tags[scr][idx].screen = scr
     if not nopopup or #tags[scr] == 1 then awful.tag.viewonly(tag) end
-    if args.rename then rename(tag) end
+    if args.rename or name == "" then rename(tag) end
     return tag
 end
 
@@ -280,7 +281,7 @@ function taglist_new(scr, label, buttons)
                 else
                     w[k].image = nil
                 end
-                if tags[(k+1)/2].name ~= "__notext" and not data[tags[(k+1)/2]].notext then
+                if not data[tags[(k+1)/2]].notext then
                     w[k+1].text = a
                 else
                     w[k+1].text = ""
