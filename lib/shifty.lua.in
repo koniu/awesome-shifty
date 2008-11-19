@@ -84,7 +84,6 @@ function rename(tag, prefix, no_selectall)
         taglist[scr][tag2index(t) * 2],
         function (name) if name:len() > 0 then t.name = name end end, nil,
         awful.util.getdir("cache") .. "/history_tags", nil, function () awful.hooks.user.call("tags", scr) end)
-
 end
 
 function send(idx)
@@ -349,7 +348,7 @@ function getpos(pos, switch)
         end
     end
     if not v then
-        v = add({ name = pos, position = pos, rename = pos .. ':', no_selectall = true })
+        v = add({ position = pos, rename = pos .. ':', no_selectall = true })
     end
     if switch then awful.tag.viewonly(v) end
     return v
