@@ -72,6 +72,7 @@ function rename(tag, prefix, no_selectall)
     local t = tag or awful.tag.selected(scr)
     local bg = nil
     local text = prefix or t.name or ""
+    local before = t.name
     if t == awful.tag.selected(scr) then bg = theme.bg_focus or '#535d6c'
         else bg = theme.bg_normal or '#222222' end
 
@@ -84,7 +85,16 @@ function rename(tag, prefix, no_selectall)
         prompt = '<bg color="'..bg..'" /> ' },
         taglist[scr][tag2index(t) * 2],
         function (name) if name:len() > 0 then t.name = name end end, nil,
-        awful.util.getdir("cache") .. "/history_tags", nil, function () awful.hooks.user.call("tags", scr) end)
+        awful.util.getdir("cache") .. "/history_tags", nil,
+        function ()
+            if data[t].creating and t.name == before then
+                del(t)
+            else
+                data[t].creating = nil
+            end
+            awful.hooks.user.call("tags", scr)
+        end
+    )
 end
 
 function send(idx)
@@ -154,7 +164,10 @@ function add(args)
     table.insert(tags[scr], idx, tag)
     tags[scr][idx].screen = scr
     if (not nopopup and not args.noswitch) or #tags[scr] == 1 then awful.tag.viewonly(tag) end
-    if args.rename or name == "_" then rename(tag, args.rename, args.no_selectall) end
+    if args.rename or name == "_" then
+        data[tag].creating = true
+        rename(tag, args.rename, args.no_selectall)
+    end
     return tag
 end
 
@@ -342,7 +355,7 @@ function getpos(pos, switch)
     local v = nil
     local scr = screen or mouse.screen or 1
     for t, d in pairs(data) do
-        if t and d.position == pos then v = t end
+        if t and d.position == pos then v = t; break end
     end
     if not v then
         for i, j in pairs(config.tags) do
