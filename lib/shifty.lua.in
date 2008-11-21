@@ -139,6 +139,7 @@ function add(args)
     position = args.position or preset.position
     nopopup = args.nopopup or preset.nopopup or config.defaults.nopopup
     leave_kills = args.leave_kills or preset.leave_kills or config.defaults.leave_kills
+    exclusive = args.exclusive or preset.exclusive or config.defaults.exclusive
 
     local tag = tag({ name = name, layout = layout, nmaster = nmaster, mwfact = mwfact, ncol = ncol })
 
@@ -158,7 +159,7 @@ function add(args)
     data[tag].persist = persist
     data[tag].nopopup = nopopup
     data[tag].leave_kills = leave_kills
-    data[tag].exclusive = preset.exclusive
+    data[tag].exclusive = exclusive
     if icon then data[tag].icon = image(icon) end
 
     table.insert(tags[scr], idx, tag)
