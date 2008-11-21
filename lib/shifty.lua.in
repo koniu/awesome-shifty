@@ -213,6 +213,7 @@ function match(c)
                         tagged = true
                     end
                     if a.override_exclusive and #tags[c.screen] > 0 then tagged = true end
+                    if a.float then c.floating = true end
                 end
             end
         end
