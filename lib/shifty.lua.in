@@ -215,6 +215,7 @@ function match(c)
                     if a.override_exclusive and #tags[c.screen] > 0 then tagged = true end
                     if a.float then c.floating = true end
                     if a.geometry then c:fullgeometry(a.geometry) end
+                    if a.slave then awful.client.setslave(c) end
                 end
             end
         end
