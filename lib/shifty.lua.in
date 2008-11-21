@@ -361,10 +361,13 @@ function getpos(pos, switch)
     local existing = {}
     local selected = nil
     local scr = mouse.screen or 1
-    for i, t in ipairs(tags[scr]) do
-        if data[t].position == pos then
-            table.insert(existing, t)
-            if t.selected then selected = #existing end
+    for i = 1, screen.count() do
+        local s = awful.util.cycle(screen.count(), scr + i - 1)
+        for j, t in ipairs(tags[s]) do
+            if data[t].position == pos then
+                table.insert(existing, t)
+                if t.selected and s == scr then selected = #existing end
+            end
         end
     end
     if #existing > 0 then
@@ -378,7 +381,12 @@ function getpos(pos, switch)
     if not v then
         v = add({ position = pos, rename = pos .. ':', no_selectall = true, noswitch = not switch })
     end
-    if switch then awful.tag.viewonly(v) end
+    if switch then
+        if mouse.screen ~= v.screen then mouse.screen = v.screen end
+        awful.tag.viewonly(v)
+        local a = awful.client.focus.history.get(v.screen, 0) --FIXME
+        if a then client.focus = a end
+    end
     return v
 end
 
