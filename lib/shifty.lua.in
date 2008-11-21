@@ -212,7 +212,7 @@ function match(c)
                         end
                         tagged = true
                     end
-                    if a.override_exclusive and #tags[c.screen] > 0 then tagged = true end
+                    if a.override_exclusive and awful.tag.selected(c.screen) then tagged = true end
                     if a.float then c.floating = true end
                     if a.geometry then c:fullgeometry(a.geometry) end
                     if a.slave then awful.client.setslave(c) end
