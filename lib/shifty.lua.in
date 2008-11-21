@@ -358,9 +358,17 @@ end
 
 function getpos(pos, switch)
     local v = nil
-    local scr = screen or mouse.screen or 1
-    for t, d in pairs(data) do
-        if t and d.position == pos then v = t; break end
+    local existing = {}
+    local selected = nil
+    local scr = mouse.screen or 1
+    for i, t in ipairs(tags[scr]) do
+        if data[t].position == pos then
+            table.insert(existing, t)
+            if t.selected then selected = #existing end
+        end
+    end
+    if #existing > 0 then
+       if selected then v = existing[awful.util.cycle(#existing, selected + 1)] else v = existing[1] end
     end
     if not v then
         for i, j in pairs(config.tags) do
