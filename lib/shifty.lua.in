@@ -191,7 +191,7 @@ function match(c)
     local inst = c.instance
     local role = c.role
     local name = nil
-    local match = nil
+    local tagged = nil
 
     for i, a in ipairs(config.apps) do
         if a.match then
@@ -201,7 +201,6 @@ function match(c)
                     (inst and inst:find(w)) or
                     (cls and cls:find(w))
                 then
-                    match = true
                     if a.screen and a.screen ~= c.screen and a.screen <= screen.count()
                         then c.screen = a.screen end
                     if a.tag then
@@ -210,13 +209,15 @@ function match(c)
                         if (not data[target].nopopup and not a.nopopup) and target ~= awful.tag.selected(target.screen) then
                             awful.tag.viewonly(target)
                         end
+                        tagged = true
                     end
+                    if a.override_exclusive and #tags[c.screen] > 0 then tagged = true end
                 end
             end
         end
     end
 
-    if not match and (#tags[c.screen] == 0 or data[awful.tag.selected()].exclusive) then
+    if not tagged and (#tags[c.screen] == 0 or data[awful.tag.selected()].exclusive) then
         if config.guess and cls then name = cls:lower() else name = "new" end
         local target = add({ name = name, screen = c.screen })
         awful.client.movetotag(target, c)
