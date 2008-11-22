@@ -140,6 +140,7 @@ function add(args)
     nopopup = args.nopopup or preset.nopopup or config.defaults.nopopup
     leave_kills = args.leave_kills or preset.leave_kills or config.defaults.leave_kills
     exclusive = args.exclusive or preset.exclusive or config.defaults.exclusive
+    solitary = args.solitary or preset.solitary or config.defaults.solitary
 
     local tag = tag({ name = name, layout = layout, nmaster = nmaster, mwfact = mwfact, ncol = ncol })
 
@@ -160,6 +161,7 @@ function add(args)
     data[tag].nopopup = nopopup
     data[tag].leave_kills = leave_kills
     data[tag].exclusive = exclusive
+    data[tag].solitary = solitary
     if icon then data[tag].icon = image(icon) end
 
     table.insert(tags[scr], idx, tag)
@@ -215,19 +217,23 @@ function match(c)
         end
     end
 
-    -- if not matched and not acceptable at current tag, guess the target
-    if not target_name and (#tags[c.screen] == 0 or (data[awful.tag.selected()].exclusive and not override_exclusive)) then
+
+    -- if not matched and not acceptable at current tag, guess the target_name
+    local sel = awful.tag.selected(c.screen)
+    if not target_name and (#tags[c.screen] == 0 or (data[sel].exclusive and not override_exclusive) or data[sel].solitary) then
         if config.guess and cls then target_name = cls:lower() else target_name = "new" end
     end
 
     -- get/create target tag and move the client
     if target_name then
-        target = name2tag(target_name, c.screen) or add({ name = target_name, screen = c.screen, noswitch = true })
+        target = name2tag(target_name, c.screen)
+        if not target or (data[target].solitary and #target:clients() > 0) then
+            target = add({ name = target_name, screen = c.screen, noswitch = true }) end
         awful.client.movetotag(target, c)
     end
 
     -- if target different from current tag, switch unless nopopup
-    if not (data[target].nopopup or nopopup) and target ~= awful.tag.selected(target.screen) then
+    if target and (not (data[target].nopopup or nopopup) and target ~= sel) then
         awful.tag.viewonly(target)
     end
 end
