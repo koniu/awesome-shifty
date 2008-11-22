@@ -188,13 +188,12 @@ function del(tag)
 end
 
 function match(c)
+    local target_name, target, nopopup, override_exclusive = nil
     local cls = c.class
     local inst = c.instance
     local role = c.role
-    local name = nil
-    local tagged = nil
-    local target = nil
 
+    -- try matching client to config.apps
     for i, a in ipairs(config.apps) do
         if a.match then
             for k, w in ipairs(a.match) do
@@ -205,31 +204,30 @@ function match(c)
                 then
                     if a.screen and a.screen ~= c.screen and a.screen <= screen.count()
                         then c.screen = a.screen end
-                    if a.tag then
-                        local target = name2tag(a.tag, c.screen) or add({ name = a.tag, screen = c.screen })
-                        awful.client.movetotag(target, c)
-                        if (not data[target].nopopup and not a.nopopup) and target ~= awful.tag.selected(target.screen) then
-                            awful.tag.viewonly(target)
-                        end
-                        tagged = true
-                    end
-                    if a.override_exclusive and awful.tag.selected(c.screen) then tagged = true end
+                    if a.tag then target_name = a.tag end
                     if a.float then c.floating = true end
                     if a.geometry then c:fullgeometry(a.geometry) end
                     if a.slave then awful.client.setslave(c) end
+                    if a.nopopup then nopopup = true end
+                    if a.override_exclusive then override_exclusive = true end
                 end
             end
         end
     end
 
-    if not tagged and (#tags[c.screen] == 0 or data[awful.tag.selected()].exclusive) then
-        if config.guess and cls then
-            name = cls:lower()
-        else
-            name = "new"
-        end
-        target = name2tag(name, c.screen) or add({ name = name, screen = c.screen })
+    -- if not matched and not acceptable at current tag, guess the target
+    if not target_name and (#tags[c.screen] == 0 or (data[awful.tag.selected()].exclusive and not override_exclusive)) then
+        if config.guess and cls then target_name = cls:lower() else target_name = "new" end
+    end
+
+    -- get/create target tag and move the client
+    if target_name then
+        target = name2tag(target_name, c.screen) or add({ name = target_name, screen = c.screen, noswitch = true })
         awful.client.movetotag(target, c)
+    end
+
+    -- if target different from current tag, switch unless nopopup
+    if not (data[target].nopopup or nopopup) and target ~= awful.tag.selected(target.screen) then
         awful.tag.viewonly(target)
     end
 end
