@@ -193,6 +193,7 @@ function match(c)
     local role = c.role
     local name = nil
     local tagged = nil
+    local target = nil
 
     for i, a in ipairs(config.apps) do
         if a.match then
@@ -222,8 +223,12 @@ function match(c)
     end
 
     if not tagged and (#tags[c.screen] == 0 or data[awful.tag.selected()].exclusive) then
-        if config.guess and cls then name = cls:lower() else name = "new" end
-        local target = add({ name = name, screen = c.screen })
+        if config.guess and cls then
+            name = cls:lower()
+        else
+            name = "new"
+        end
+        target = name2tag(name, c.screen) or add({ name = name, screen = c.screen })
         awful.client.movetotag(target, c)
         awful.tag.viewonly(target)
     end
