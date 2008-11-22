@@ -360,7 +360,7 @@ function sweep()
             else
                 data[t].used = true
             end
-            if t.selected then data[t].visited = true end
+            if data[t] and t.selected then data[t].visited = true end
         end
     end
 end
