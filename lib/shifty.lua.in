@@ -142,6 +142,8 @@ function add(args)
     exclusive = args.exclusive or preset.exclusive or config.defaults.exclusive
     solitary = args.solitary or preset.solitary or config.defaults.solitary
     nextto = args.nextto or preset.nextto or config.defaults.nextto
+    spawn = args.spawn or preset.spawn
+    run = args.run or preset.run or config.defaults.run
 
     local tag = tag({ name = name, layout = layout, nmaster = nmaster, mwfact = mwfact, ncol = ncol })
 
@@ -172,6 +174,8 @@ function add(args)
         data[tag].creating = true
         rename(tag, args.rename, args.no_selectall)
     end
+    if spawn then awful.util.spawn(spawn, scr) end
+    if run then run(tag) end
     return tag
 end
 
