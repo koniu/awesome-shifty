@@ -22,6 +22,7 @@ local awful = require("awful")
 local image = image
 local otable = otable
 local pairs = pairs
+local io = io
 
 module("shifty")
 
@@ -84,7 +85,8 @@ function rename(tag, prefix, no_selectall)
         selectall = not no_selectall,
         prompt = '<bg color="'..bg..'" /> ' },
         taglist[scr][tag2index(t) * 2],
-        function (name) if name:len() > 0 then t.name = name end end, nil,
+        function (name) if name:len() > 0 then t.name = name end end,
+        completion,
         awful.util.getdir("cache") .. "/history_tags", nil,
         function ()
             if data[t].creating and t.name == before then
@@ -408,6 +410,53 @@ function init()
     for i, j in pairs(config.tags) do
         if j.init then add({ name = i, persist = true, screen = j.screen }) end
     end
+end
+
+function completion(cmd, cur_pos, ncomp)
+    local list = {}
+
+    -- gather names from config.tags
+    for n, p in pairs(config.tags) do table.insert(list, n) end
+
+    -- gather names from config.apps
+    for i, p in pairs(config.apps) do
+        if p.tag then table.insert(list, p.tag) end
+    end
+
+    -- gather names from existing tags, starting with the current screen
+    for i = 1, screen.count() do
+        local s = awful.util.cycle(screen.count(), mouse.screen + i - 1)
+        for j, t in pairs(tags[s]) do table.insert(list, t.name) end
+    end
+
+    -- gather names from history
+    f = io.open(awful.util.getdir("cache") .. "/history_tags")
+    for name in f:lines() do table.insert(list, name) end
+    f:close()
+
+    -- do nothing if it's pointless
+    if cur_pos ~= #cmd + 1 and cmd:sub(cur_pos, cur_pos) ~= " " then
+        return cmd, cur_pos
+    elseif #cmd == 0 then
+        return cmd, cur_pos
+    end
+
+    -- find matching indices
+    local matches = {}
+    for i, j in ipairs(list) do
+        if list[i]:find("^" .. cmd:sub(1, cur_pos)) then
+            table.insert(matches, list[i])
+        end
+    end
+
+    -- no matches
+    if #matches == 0 then return end
+
+    -- cycle
+    while ncomp > #matches do ncomp = ncomp - #matches end
+
+    -- return match and position
+    return matches[ncomp], cur_pos
 end
 
 awful.hooks.tags.register(sweep)
