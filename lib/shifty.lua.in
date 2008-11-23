@@ -216,11 +216,13 @@ function match(c)
                     if a.screen and a.screen ~= c.screen and a.screen <= screen.count()
                         then c.screen = a.screen end
                     if a.tag then target_name = a.tag end
-                    if a.float then c.floating = true end
+                    if a.float then c.floating = a.float end
                     if a.geometry then c:fullgeometry(a.geometry) end
                     if a.slave then awful.client.setslave(c) end
                     if a.nopopup then nopopup = true end
                     if a.intrusive then intrusive = true end
+                    if a.fullscreen then c.fullscreen = a.fullscreen end
+                    if a.honorsizehints then c.honorsizehints = a.honorsizehints end
                 end
             end
         end
@@ -229,7 +231,7 @@ function match(c)
 
     -- if not matched and not acceptable at current tag, guess the target_name
     local sel = awful.tag.selected(c.screen)
-    if not target_name and (#tags[c.screen] == 0 or ((data[sel].exclusive  or data[sel].solitary) and not intrusive)) then
+    if not target_name and (#tags[c.screen] == 0 or ((data[sel].exclusive or data[sel].solitary) and not intrusive)) then
         if config.guess and cls then target_name = cls:lower() else target_name = "new" end
     end
 
