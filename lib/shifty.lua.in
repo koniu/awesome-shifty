@@ -141,6 +141,7 @@ function add(args)
     leave_kills = args.leave_kills or preset.leave_kills or config.defaults.leave_kills
     exclusive = args.exclusive or preset.exclusive or config.defaults.exclusive
     solitary = args.solitary or preset.solitary or config.defaults.solitary
+    nextto = args.nextto or preset.nextto or config.defaults.nextto
 
     local tag = tag({ name = name, layout = layout, nmaster = nmaster, mwfact = mwfact, ncol = ncol })
 
@@ -152,7 +153,7 @@ function add(args)
             end
         end
     end
-    if not idx then idx = #tags[scr] + 1 end
+    idx = idx or (#tags[scr] > 0 and nextto and tag2index(awful.tag.selected(scr)) + 1) or #tags[scr] + 1
 
     data[tag] = {}
     data[tag].position = position
