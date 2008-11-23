@@ -228,10 +228,14 @@ function match(c)
         end
     end
 
-
-    -- if not matched and not acceptable at current tag, guess the target_name
+    -- if not matched or matches currently selected, see if we can leave at the current tag
     local sel = awful.tag.selected(c.screen)
-    if not target_name and (#tags[c.screen] == 0 or ((data[sel].exclusive or data[sel].solitary) and not intrusive)) then
+    if #tags[c.screen] > 0 and (not target_name or (sel and target_name == sel.name)) then
+        if not (data[sel].exclusive or data[sel].solitary) or intrusive then return end
+    end
+
+    -- if still unmatched, try guessing the tag
+    if not target_name then
         if config.guess and cls then target_name = cls:lower() else target_name = "new" end
     end
 
