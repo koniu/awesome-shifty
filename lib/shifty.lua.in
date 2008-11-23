@@ -197,7 +197,7 @@ function del(tag)
 end
 
 function match(c)
-    local target_name, target, nopopup, override_exclusive = nil
+    local target_name, target, nopopup, intrusive = nil
     local cls = c.class
     local inst = c.instance
     local role = c.role
@@ -220,7 +220,7 @@ function match(c)
                     if a.geometry then c:fullgeometry(a.geometry) end
                     if a.slave then awful.client.setslave(c) end
                     if a.nopopup then nopopup = true end
-                    if a.override_exclusive then override_exclusive = true end
+                    if a.intrusive then intrusive = true end
                 end
             end
         end
@@ -229,14 +229,14 @@ function match(c)
 
     -- if not matched and not acceptable at current tag, guess the target_name
     local sel = awful.tag.selected(c.screen)
-    if not target_name and (#tags[c.screen] == 0 or ((data[sel].exclusive  or data[sel].solitary) and not override_exclusive)) then
+    if not target_name and (#tags[c.screen] == 0 or ((data[sel].exclusive  or data[sel].solitary) and not intrusive)) then
         if config.guess and cls then target_name = cls:lower() else target_name = "new" end
     end
 
     -- get/create target tag and move the client
     if target_name then
         target = name2tag(target_name, c.screen)
-        if not target or (data[target].solitary and #target:clients() > 0 and not override_exclusive) then
+        if not target or (data[target].solitary and #target:clients() > 0 and not intrusive) then
             target = add({ name = target_name, screen = c.screen, noswitch = true }) end
         awful.client.movetotag(target, c)
     end
