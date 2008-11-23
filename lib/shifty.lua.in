@@ -201,6 +201,7 @@ function match(c)
     local cls = c.class
     local inst = c.instance
     local role = c.role
+    local typ = c.type
 
     -- try matching client to config.apps
     for i, a in ipairs(config.apps) do
@@ -209,7 +210,8 @@ function match(c)
                 if
                     (role and role:find(w)) or
                     (inst and inst:find(w)) or
-                    (cls and cls:find(w))
+                    (cls and cls:find(w)) or
+                    (typ and typ:find(w))
                 then
                     if a.screen and a.screen ~= c.screen and a.screen <= screen.count()
                         then c.screen = a.screen end
@@ -227,14 +229,14 @@ function match(c)
 
     -- if not matched and not acceptable at current tag, guess the target_name
     local sel = awful.tag.selected(c.screen)
-    if not target_name and (#tags[c.screen] == 0 or (data[sel].exclusive and not override_exclusive) or data[sel].solitary) then
+    if not target_name and (#tags[c.screen] == 0 or ((data[sel].exclusive  or data[sel].solitary) and not override_exclusive)) then
         if config.guess and cls then target_name = cls:lower() else target_name = "new" end
     end
 
     -- get/create target tag and move the client
     if target_name then
         target = name2tag(target_name, c.screen)
-        if not target or (data[target].solitary and #target:clients() > 0) then
+        if not target or (data[target].solitary and #target:clients() > 0 and not override_exclusive) then
             target = add({ name = target_name, screen = c.screen, noswitch = true }) end
         awful.client.movetotag(target, c)
     end
