@@ -23,6 +23,7 @@ local image = image
 local otable = otable
 local pairs = pairs
 local io = io
+local tostring = tostring
 
 module("shifty")
 
@@ -511,6 +512,25 @@ function completion(cmd, cur_pos, ncomp)
 
     -- return match and position
     return matches[ncomp], cur_pos
+end
+
+function info(t)
+    if not t then return end
+
+    local v = "<b>     [ " .. t.name .." ]</b>\n\n" ..
+        "  screen = " .. t.screen .. "\n" ..
+        "selected = " .. tostring(t.selected) .. "\n" ..
+        "  layout = " .. t.layout .. "\n" ..
+        "  mwfact = " .. t.mwfact .. "\n"  ..
+        " nmaster = " .. t.nmaster .. "\n" ..
+        "    ncol = " .. t.ncol .. "\n" ..
+        "#clients = " .. #t:clients() .. "\n"
+
+    for op, val in pairs(data[t]) do
+        v = v .. "\n" .. op .. " = " .. tostring(val)
+    end
+
+    return v
 end
 
 awful.hooks.tags.register(sweep)
