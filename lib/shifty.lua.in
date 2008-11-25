@@ -24,6 +24,7 @@ local otable = otable
 local pairs = pairs
 local io = io
 local tostring = tostring
+local tonumber = tonumber
 
 module("shifty")
 
@@ -33,6 +34,8 @@ config.tags = {}
 config.apps = {}
 config.defaults = {}
 config.guess = true
+config.guess_position = true
+
 for s = 1, screen.count() do tags[s] = {} end
 local data = otable()
 
@@ -139,11 +142,18 @@ end
 function set(t, args)
     if not t then return end
     if not args then args = {} end
+    local guessed_position = nil
 
     -- get the name and preset
     local name = args.name or t.name
     local preset = config.tags[name] or {}
     local initial = #data[t] == 0 and true
+
+    -- try to get position from then name
+    if not (args.position or preset.position) and config.guess_position then
+        local num = name:find('^[1-9]')
+        if num then guessed_position = tonumber(name:sub(1,1)) end
+    end
 
     -- set tag attributes
     t.layout = args.layout or preset.layout or config.defaults.layout
@@ -159,7 +169,7 @@ function set(t, args)
     data[t].nopopup = args.nopopup or preset.nopopup or config.defaults.nopopup
     data[t].leave_kills = args.leave_kills or preset.leave_kills or config.defaults.leave_kills
     data[t].solitary = args.solitary or preset.solitary or config.defaults.solitary
-    data[t].position = args.position or preset.position or data[t].position
+    data[t].position = args.position or preset.position or guessed_position or data[t].position
     local icon = args.icon or preset.icon or config.defaults.icon
     if icon then data[t].icon = image(icon) end
 
