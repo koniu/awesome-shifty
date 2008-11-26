@@ -33,7 +33,7 @@ config = {}
 config.tags = {}
 config.apps = {}
 config.defaults = {}
-config.guess = true
+config.guess_name = true
 config.guess_position = true
 
 for s = 1, screen.count() do tags[s] = {} end
@@ -293,7 +293,7 @@ function match(c)
 
     -- if still unmatched, try guessing the tag
     if not target_name then
-        if config.guess and cls then target_name = cls:lower() else target_name = "new" end
+        if config.guess_name and cls then target_name = cls:lower() else target_name = "new" end
     end
 
     -- get/create target tag and move the client
