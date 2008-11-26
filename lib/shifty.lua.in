@@ -71,7 +71,7 @@ end
 function next() viewidx(1) end
 function prev() viewidx(-1) end
 
-function rename(tag, prefix, no_selectall)
+function rename(tag, prefix, no_selectall, initial)
     local theme = beautiful.get()
     local scr = (tag and tag.screen) or mouse.screen or 1
     local t = tag or awful.tag.selected(scr)
@@ -93,9 +93,10 @@ function rename(tag, prefix, no_selectall)
         completion,
         awful.util.getdir("cache") .. "/history_tags", nil,
         function ()
-            if #data[t] == 0 and t.name == before then
+            if initial and t.name == before then
                 del(t)
             else
+                data[t].initial = true
                 set(t)
             end
             awful.hooks.user.call("tags", scr)
@@ -115,25 +116,15 @@ end
 function send_next() send(1) end
 function send_prev() send(-1) end
 
-function shift(idx)
-    local scr = mouse.screen or 1
-    local sel = awful.tag.selected(scr)
-    local sel_idx = tag2index(sel)
-    local target = awful.util.cycle(#tags[scr], sel_idx + idx)
-    table.remove(tags[scr], sel_idx)
-    table.insert(tags[scr], target, sel)
-    awful.hooks.user.call("tags", scr)
-end
-
-function shift_next() shift(1) end
-function shift_prev() shift(-1) end
+function shift_next() set(awful.tag.selected(), { rel_index = 1 }) end
+function shift_prev() set(awful.tag.selected(), { rel_index = -1 }) end
 
 function pos2idx(pos, scr)
     local v = 1
     if pos and scr then
         for i = #tags[scr] , 1, -1 do
             local t = tags[scr][i]
-            if data[t].position and data[t].position < pos then v = i + 1; break end
+            if data[t].position and data[t].position <= pos then v = i + 1; break end
         end
     end
     return v
@@ -147,7 +138,6 @@ function set(t, args)
     -- get the name and preset
     local name = args.name or t.name
     local preset = config.tags[name] or {}
-    local initial = #data[t] == 0 and true
 
     -- try to get position from then name
     if not (args.position or preset.position) and config.guess_position then
@@ -179,37 +169,37 @@ function set(t, args)
     local sel = awful.tag.selected(t.screen)
     local sel_idx = (sel and tag2index(sel)) or 0 --TODO: what happens with rel_idx if no tags selected
     local t_idx = tag2index(t)
+    local limit = (not t_idx and #tags[t.screen] + 1) or #tags[t.screen]
     local idx = nil
 
-    if data[t].position then
-        idx = pos2idx(data[t].position, t.screen)
+    if rel_index then
+        idx = awful.util.cycle(limit, (t_idx or sel_idx) + rel_index)
     elseif index then
-        idx = index
-    elseif rel_index then
-        idx = awful.util.cycle(#tags[t.screen] + 1, sel_idx + rel_index)
+        idx = awful.util.cycle(limit, index)
+    elseif data[t].position then
+        idx = pos2idx(data[t].position, t.screen)
+        if t_idx and t_idx < idx then idx = idx - 1 end
     elseif not t_idx then
         idx = #tags[t.screen] + 1
     end
 
-    -- if tag already in the table and new index
-    if idx and t_idx then
-        -- remove old entry
-        table.remove(tags[t.screen], t_idx)
-        -- if moving tag to the right, adjust new idx
-        if t_idx < idx then idx = idx - 1 end
-    end
+    -- if tag already in the table, remove it
+    if idx and t_idx then table.remove(tags[t.screen], t_idx) end
 
     -- if we have an index, insert the notification
     if idx then table.insert(tags[t.screen], idx, t) end
 
     -- if set()ting upon tag creation, spawn/run
-    if initial then
+    if data[t].initial then
         local spawn = args.spawn or preset.spawn
         local run = args.run or preset.run or config.defaults.run
         if spawn and not data[t].matched then awful.util.spawn(spawn, scr) end
         if run then run(t) end
+        data[t].initial = nil
     end
 
+    -- refresh taglist and return
+    awful.hooks.user.call("tags", t.screen)
     return t
 end
 
@@ -221,6 +211,7 @@ function add(args)
     -- initialize a new tag object and its data structure
     local t = tag({ name = name, })
     data[t] = {}
+    data[t].initial = true
 
     -- apply tag settings
     set(t, args)
@@ -230,8 +221,8 @@ function add(args)
 
     -- get the name or rename
     if args.name then t.name = args.name
-    elseif args.position then rename(t, args.position .. ":", true)
-    else rename(t, "")
+    elseif args.position then rename(t, args.position .. ":", true, true)
+    else rename(t, "", nil, true)
     end
 
     -- return the tag
