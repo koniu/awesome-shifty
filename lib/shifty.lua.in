@@ -162,15 +162,15 @@ function set(t, args)
     t.ncol = args.ncol or preset.ncol or config.defaults.ncol or t.ncol
     t.screen = args.screen or preset.screen or t.screen or mouse.screen
     t.name = name
-    data[t].matched = args.matched
-    data[t].notext = args.notext or preset.notext or config.defaults.notext
-    data[t].exclusive = args.exclusive or preset.exclusive or config.defaults.exclusive
-    data[t].persist = args.persist or preset.persist or config.defaults.persist
-    data[t].nopopup = args.nopopup or preset.nopopup or config.defaults.nopopup
-    data[t].leave_kills = args.leave_kills or preset.leave_kills or config.defaults.leave_kills
-    data[t].solitary = args.solitary or preset.solitary or config.defaults.solitary
+    data[t].matched = args.matched or data[t].matched
+    data[t].notext = args.notext or preset.notext or data[t].notext or config.defaults.notext
+    data[t].exclusive = args.exclusive or preset.exclusive or data[t].exclusive or config.defaults.exclusive
+    data[t].persist = args.persist or preset.persist or data[t].persist or config.defaults.persist
+    data[t].nopopup = args.nopopup or preset.nopopup or data[t].nopopup or config.defaults.nopopup
+    data[t].leave_kills = args.leave_kills or preset.leave_kills or data[t].leave_kills or config.defaults.leave_kills
+    data[t].solitary = args.solitary or preset.solitary or data[t].solitary or config.defaults.solitary
     data[t].position = args.position or preset.position or guessed_position or data[t].position
-    local icon = args.icon or preset.icon or config.defaults.icon
+    local icon = args.icon or preset.icon or data[t].icon or config.defaults.icon
     if icon then data[t].icon = image(icon) end
 
     -- calculate desired taglist index
