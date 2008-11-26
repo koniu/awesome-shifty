@@ -477,6 +477,22 @@ function init()
     end
 end
 
+function count(table, element)
+    local v = 0
+    for i, e in pairs(table) do
+        if element == e then v = v + 1 end
+    end
+    return v
+end
+
+function remove_dup(table)
+    local v = {}
+    for i, entry in ipairs(table) do
+        if count(v, entry) == 0 then v[#v+ 1] = entry end
+    end
+    return v
+end
+
 function completion(cmd, cur_pos, ncomp)
     local list = {}
 
@@ -515,7 +531,10 @@ function completion(cmd, cur_pos, ncomp)
     end
 
     -- no matches
-    if #matches == 0 then return end
+    if #matches == 0 then return cmd, cur_pos end
+
+    -- remove duplicates
+    matches = remove_dup(matches)
 
     -- cycle
     while ncomp > #matches do ncomp = ncomp - #matches end
