@@ -25,7 +25,7 @@ local pairs = pairs
 local io = io
 local tostring = tostring
 local tonumber = tonumber
-local dbg = dbg
+
 module("shifty")
 
 tags = {}
@@ -213,7 +213,7 @@ end
 
 function add(args)
     if not args then args = {} end
-    local  scr = args.screen or mouse.screen --FIXME test handling of screen arg more
+    local scr = args.screen or mouse.screen --FIXME test handling of screen arg more
     local name = args.name or ( args.rename and args.rename .. "_" ) or "_" --FIXME: pretend prompt '_'
 
     -- initialize a new tag object and its data structure
@@ -300,7 +300,7 @@ function match(c)
     if target_name then
         target = name2tag(target_name, c.screen)
         if not target or (data[target].solitary and #target:clients() > 0 and not intrusive) then
-            target = add({ name = target_name, noswitch = true, matched = true }) end
+            target = add({ name = target_name, noswitch = true, matched = true, screen = c.screen }) end
         awful.client.movetotag(target, c)
     end
 
