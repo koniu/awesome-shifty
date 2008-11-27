@@ -25,16 +25,18 @@ local pairs = pairs
 local io = io
 local tostring = tostring
 local tonumber = tonumber
-
+local dbg = dbg
 module("shifty")
 
 tags = {}
+index_cache = {}
 config = {}
 config.tags = {}
 config.apps = {}
 config.defaults = {}
 config.guess_name = true
 config.guess_position = true
+config.remember_index = true
 
 for s = 1, screen.count() do tags[s] = {} end
 local data = otable()
@@ -179,6 +181,8 @@ function set(t, args)
     elseif data[t].position then
         idx = pos2idx(data[t].position, t.screen)
         if t_idx and t_idx < idx then idx = idx - 1 end
+    elseif config.remember_index and index_cache[t.name] then
+        idx = index_cache[t.name]
     elseif not t_idx then
         idx = #tags[t.screen] + 1
     end
@@ -187,7 +191,11 @@ function set(t, args)
     if idx and t_idx then table.remove(tags[t.screen], t_idx) end
 
     -- if we have an index, insert the notification
-    if idx then table.insert(tags[t.screen], idx, t) end
+    if idx then
+        index_cache[t.name] = idx
+        table.insert(tags[t.screen], idx, t)
+    end
+
 
     -- if set()ting upon tag creation, spawn/run
     if data[t].initial then
@@ -235,6 +243,7 @@ function del(tag)
     local t = tag or sel
     local idx = tag2index(t)
     if #(t:clients()) > 0 then return end
+    index_cache[t.name] = idx
     table.remove(tags[scr], idx)
     data[t] = nil
     t.screen = nil
