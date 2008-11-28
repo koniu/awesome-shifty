@@ -254,7 +254,7 @@ function del(tag)
 end
 
 function match(c)
-    local target_name, target, nopopup, intrusive = nil
+    local target_tag, target_screen, target, nopopup, intrusive = nil
     local cls = c.class
     local inst = c.instance
     local role = c.role
@@ -270,9 +270,14 @@ function match(c)
                     (cls and cls:find(w)) or
                     (typ and typ:find(w))
                 then
-                    if a.screen and a.screen ~= c.screen and a.screen <= screen.count()
-                        then c.screen = a.screen end
-                    if a.tag then target_name = a.tag end
+                    if a.tag and config.tags[a.tag] and config.tags[a.tag].screen then
+                        target_screen = config.tags[a.tag].screen
+                    elseif a.screen then
+                        target_screen = a.screen
+                    else
+                        target_screen = c.screen
+                    end
+                    if a.tag then target_tag = a.tag end
                     if a.float then c.floating = a.float end
                     if a.geometry then c:fullgeometry(a.geometry) end
                     if a.slave then awful.client.setslave(c) end
@@ -287,22 +292,23 @@ function match(c)
 
     -- if not matched or matches currently selected, see if we can leave at the current tag
     local sel = awful.tag.selected(c.screen)
-    if #tags[c.screen] > 0 and (not target_name or (sel and target_name == sel.name)) then
+    if #tags[c.screen] > 0 and (not target_tag or (sel and target_tag == sel.name)) then
         if not (data[sel].exclusive or data[sel].solitary) or intrusive then return end
     end
 
     -- if still unmatched, try guessing the tag
-    if not target_name then
-        if config.guess_name and cls then target_name = cls:lower() else target_name = "new" end
+    if not target_tag then
+        if config.guess_name and cls then target_tag = cls:lower() else target_tag = "new" end
     end
 
     -- get/create target tag and move the client
-    if target_name then
-        target = name2tag(target_name, c.screen)
+    if target_tag then
+        target = name2tag(target_tag, target_screen)
         if not target or (data[target].solitary and #target:clients() > 0 and not intrusive) then
-            target = add({ name = target_name, noswitch = true, matched = true, screen = c.screen }) end
+            target = add({ name = target_tag, noswitch = true, matched = true, screen = target_screen }) end
         awful.client.movetotag(target, c)
     end
+    if target_screen and c.screen ~= target_screen then c.screen = target_screen end
 
     -- if target different from current tag, switch unless nopopup
     if target and (not (data[target].nopopup or nopopup) and target ~= sel) then
