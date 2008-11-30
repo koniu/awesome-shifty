@@ -132,6 +132,14 @@ function pos2idx(pos, scr)
     return v
 end
 
+function select(args)
+    for i, a in pairs(args) do
+        if a ~= nil then
+            return a
+        end
+    end
+end
+
 function set(t, args)
     if not t then return end
     if not args then args = {} end
@@ -154,16 +162,16 @@ function set(t, args)
     t.ncol = args.ncol or preset.ncol or config.defaults.ncol or t.ncol
     t.screen = args.screen or preset.screen or t.screen or mouse.screen
     t.name = name
-    data[t].matched = args.matched or data[t].matched
-    data[t].notext = args.notext or preset.notext or data[t].notext or config.defaults.notext
-    data[t].exclusive = args.exclusive or preset.exclusive or data[t].exclusive or config.defaults.exclusive
-    data[t].persist = args.persist or preset.persist or data[t].persist or config.defaults.persist
-    data[t].nopopup = args.nopopup or preset.nopopup or data[t].nopopup or config.defaults.nopopup
-    data[t].leave_kills = args.leave_kills or preset.leave_kills or data[t].leave_kills or config.defaults.leave_kills
-    data[t].solitary = args.solitary or preset.solitary or data[t].solitary or config.defaults.solitary
-    data[t].position = args.position or preset.position or guessed_position or data[t].position
-    data[t].skip_taglist = args.skip_taglist or preset.skip_taglist or data[t].skip_taglist
-    local icon = args.icon or preset.icon or data[t].icon or config.defaults.icon
+    data[t].matched = select{ args.matched, data[t].matched }
+    data[t].notext = select{ args.notext, preset.notext, data[t].notext, config.defaults.notext }
+    data[t].exclusive = select{ args.exclusive, preset.exclusive, data[t].exclusive, config.defaults.exclusive }
+    data[t].persist = select{ args.persist, preset.persist, data[t].persist, config.defaults.persist }
+    data[t].nopopup = select{ args.nopopup, preset.nopopup, data[t].nopopup, config.defaults.nopopup }
+    data[t].leave_kills = select{ args.leave_kills, preset.leave_kills, data[t].leave_kills, config.defaults.leave_kills }
+    data[t].solitary = select{ args.solitary, preset.solitary, data[t].solitary, config.defaults.solitary }
+    data[t].position = select{ args.position, preset.position, guessed_position, data[t].position }
+    data[t].skip_taglist = select{ args.skip_taglist, preset.skip_taglist, data[t].skip_taglist }
+    local icon = select{ args.icon, preset.icon, data[t].icon, config.defaults.icon }
     if icon then data[t].icon = image(icon) end
 
     -- calculate desired taglist index
