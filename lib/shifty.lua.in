@@ -171,8 +171,7 @@ function set(t, args)
     data[t].solitary = select{ args.solitary, preset.solitary, data[t].solitary, config.defaults.solitary }
     data[t].position = select{ args.position, preset.position, guessed_position, data[t].position }
     data[t].skip_taglist = select{ args.skip_taglist, preset.skip_taglist, data[t].skip_taglist }
-    local icon = select{ args.icon, preset.icon, data[t].icon, config.defaults.icon }
-    if icon then data[t].icon = image(icon) end
+    data[t].icon = select{ args.icon and image(args.icon), preset.icon and image(preset.icon), data[t].icon, config.defaults.icon and image(config.defaults.icon) }
 
     -- calculate desired taglist index
     local index = args.index or preset.index or config.defaults.index
