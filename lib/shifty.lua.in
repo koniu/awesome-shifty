@@ -73,11 +73,8 @@ end
 -- @param tag : the tag object to find
 -- @return the index [or zero] or end of the list
 function tag2index(scr, tag)
-  local tags = screen[scr]:tags()
-  for i = 1, #tags do
-    if tags[i] == tag then
-      return i
-    end
+  for i,t in ipairs(screen[scr]:tags()) do
+    if t == tag then return i end
   end
   return #tags+1 
 end
@@ -146,12 +143,12 @@ function shift_prev() set(awful.tag.selected(), { rel_index = -1 }) end
 --{{{ pos2idx: translate shifty position to tag index
 --@param pos: position (an integer)
 --@param scr: screen number
-function pos2idx(pos, scr)
+function pos2idx(pos, scr, name)
   local v = 1
   if pos and scr then
     for i = #screen[scr]:tags() , 1, -1 do
       local t = screen[scr]:tags()[i]
-      if awful.tag.getproperty(t,"position") and awful.tag.getproperty(t,"position") <= pos then 
+      if awful.tag.getproperty(t,"position") and awful.tag.getproperty(t,"position") <= pos and name ~= t.name then
         v = i + 1
         break 
       end
@@ -169,6 +166,33 @@ function select(args)
       return a
     end
   end
+end
+--}}}
+
+--{{{ dump_properties : FIXME workaround for FS#493
+-- http://awesome.naquadah.org/bugs/index.php?do=details&task_id=493
+dump = {}
+local function dump_properties()
+  for i = 1, screen.count() do
+    dump[i] = {}
+    for j, t in ipairs(screen[i]:tags()) do
+      dump[i][t] = awful.tag.getdata(t)
+    end
+  end
+end
+--}}}
+
+--{{{ restore_properties : FIXME workaround for FS#493
+-- http://awesome.naquadah.org/bugs/index.php?do=details&task_id=493
+local function restore_properties()
+  for i = 1, screen.count() do
+    for t, props in pairs(dump[i]) do
+      for p, v in pairs(props) do
+        awful.tag.setproperty(t, p, v )
+      end
+    end
+  end
+  dump = {}
 end
 --}}}
 
@@ -227,9 +251,13 @@ function set(t, args)
     if num then guessed_position = tonumber(name:sub(1,1)) end
   end
 
-  -- set tag attributes screen and name are directly set
-  t.screen = args.screen or preset.screen or t.screen or mouse.screen 
+  -- set tag attributes screen and name are directly set FIXME hacky
+  dump_properties()
+  local scr = args.screen or preset.screen or t.screen or mouse.screen
+  if t.screen ~= scr then t.screen = scr end
+  local tags = screen[scr]:tags()
   t.name = name
+  restore_properties()
 
   -- have to have a layout, or else change layout by idx fails later?
   layout = args.layout or preset.layout or config.defaults.layout or awful.layout.suit.tile
@@ -258,9 +286,9 @@ function set(t, args)
   local index = args.index or preset.index or config.defaults.index
   local rel_index = args.rel_index or preset.rel_index or config.defaults.rel_index
   local sel = awful.tag.selected(scr)
-  local sel_idx = (sel and tag2index(t.screen,sel)) or 0 --TODO: what happens with rel_idx if no tags selected
-  local t_idx = tag2index(t.screen,t)
-  local limit = (not t_idx and #screen[t.screen]:tags() + 1) or #screen[t.screen]:tags()
+  local sel_idx = (sel and tag2index(scr,sel)) or 0 --TODO: what happens with rel_idx if no tags selected
+  local t_idx = tag2index(scr,t)
+  local limit = (not t_idx and #tags + 1) or #tags
   local idx = nil
 
   if rel_index then
@@ -268,25 +296,28 @@ function set(t, args)
   elseif index then
     idx = awful.util.cycle(limit, index)
   elseif awful.tag.getproperty(t,"position") then
-    idx = pos2idx(awful.tag.getproperty(t,"position"), t.screen)
+    idx = pos2idx(awful.tag.getproperty(t,"position"), scr, t.name)
     if t_idx and t_idx < idx then idx = idx - 1 end
   elseif config.remember_index and index_cache[t.name] then
     idx = index_cache[t.name]
   elseif not t_idx then
-    idx = #screen[t.screen]:tags() + 1
+    idx = #tags + 1
   end
 
   -- if tag already in the table, remove it
-  if idx and t_idx then table.remove(screen[t.screen]:tags(), t_idx) end
+  if idx and t_idx then table.remove(tags, t_idx) end
 
   -- if we have an index, insert the notification
   if idx then
     index_cache[t.name] = idx
-    table.insert(screen[t.screen]:tags(), idx, t)
+    table.insert(tags, idx, t)
   end
 
   -- refresh taglist and return
-  awful.hooks.user.call("tags", t.screen)
+  dump_properties()
+  screen[scr]:tags(tags)
+  restore_properties()
+  awful.hooks.user.call("tags", scr)
   return t
 end
 --}}}
@@ -356,10 +387,6 @@ function add(args)
   else rename(t, "", nil, true)
   end
 
-  -- if this is a configured tag, then sort
-  if config.tags[name] ~= nil then
-    tsort(scr)
-  end
   return t
 end
 --}}}
@@ -581,7 +608,8 @@ function init()
   -- try and prevent ugly awesome 'default' tag from appearing
   for s = 1,numscr do
     if #screen[s]:tags() < 1 then
-      add({ name = "1:shifty", persist = true, screen = s, layout = (config.defaults.layout or awful.util.suit.tile)})
+--      del(name2tag("default"))
+--      add({ name = "1:shifty", persist = true, screen = s, layout = (config.defaults.layout or awful.util.suit.tile)})
     end
   end
 end
