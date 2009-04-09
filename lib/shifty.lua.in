@@ -136,7 +136,6 @@ end
 function send_next() send(1) end
 function send_prev() send(-1) end
 
--- FIXME: both of these seem broken
 function shift_next() set(awful.tag.selected(), { rel_index = 1 }) end
 function shift_prev() set(awful.tag.selected(), { rel_index = -1 }) end
 
@@ -259,14 +258,11 @@ function set(t, args)
   t.name = name
   restore_properties()
 
-  -- have to have a layout, or else change layout by idx fails later?
-  layout = args.layout or preset.layout or config.defaults.layout or awful.layout.suit.tile
-
   -- configs or sane defaults
-  mwfact  = args.mwfact or preset.mwfact or config.defaults.mwfact or t.mwfact or 0.55
-  nmaster = args.nmaster or preset.nmaster or config.defaults.nmaster or t.nmaster or 1
-  ncol    = args.ncol or preset.ncol or config.defaults.ncol or t.ncol or 1
-
+  awful.tag.setproperty(t,"layout", select{ args.layout, preset.layout, awful.tag.getproperty(t,"layout"), config.defaults.layout, awful.layout.suit.tile })
+  awful.tag.setproperty(t,"mwfact", select{ args.mwfact, preset.mwfact, awful.tag.getproperty(t,"mwfact"), config.defaults.mwfact, 0.55 })
+  awful.tag.setproperty(t,"nmaster", select{ args.nmaster, preset.nmaster, awful.tag.getproperty(t,"nmaster"), config.defaults.nmaster, 1 })
+  awful.tag.setproperty(t,"ncol", select{ args.ncol, preset.ncol, awful.tag.getproperty(t,"ncol"), config.defaults.ncol, 1 })
   awful.tag.setproperty(t,"matched", select{ args.matched, awful.tag.getproperty(t,"matched") } )
   awful.tag.setproperty(t,"notext", select{ args.notext, preset.notext, awful.tag.getproperty(t,"notext"), config.defaults.notext })
   awful.tag.setproperty(t,"exclusive", select{ args.exclusive, preset.exclusive, awful.tag.getproperty(t,"exclusive"), config.defaults.exclusive })
@@ -277,10 +273,6 @@ function set(t, args)
   awful.tag.setproperty(t,"position", select{ args.position, preset.position, guessed_position, awful.tag.getproperty(t,"position" )})
   awful.tag.setproperty(t,"skip_taglist", select{ args.skip_taglist, preset.skip_taglist, awful.tag.getproperty(t,"skip_taglist") })
   awful.tag.setproperty(t,"icon", select{ args.icon and image(args.icon), preset.icon and image(preset.icon), awful.tag.getproperty(t,"icon"), config.defaults.icon and image(config.defaults.icon) })
-  awful.layout.set(layout,t)
-  awful.tag.setmwfact(mwfact,t)
-  awful.tag.setnmaster(nmaster,t)
-  awful.tag.setncol(ncol, t)
 
   -- calculate desired taglist index
   local index = args.index or preset.index or config.defaults.index
