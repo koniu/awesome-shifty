@@ -392,27 +392,25 @@ function del(tag)
   local t = tag or sel
   local idx = tag2index(scr,t)
 
-  -- should a tag ever be deleted if #tags[scr] < 1 ?
-  if #tags > 1 then
-    if #(t:clients()) > 0 then return end
+  if #(t:clients()) > 0 then return end
 
-    -- this is also checked in sweep, but where is better? 
-    if not awful.tag.getproperty(t,"persist") then
-      index_cache[t.name] = idx
+  -- this is also checked in sweep, but where is better?
+  if not awful.tag.getproperty(t,"persist") then
+    index_cache[t.name] = idx
 
-      -- if the current tag is being deleted, move to a previous
-      if t == sel and #tags > 1 then
-        awful.tag.history.restore(scr)
-        -- this is supposed to cycle if history is invalid?
-        -- e.g. if many tags are deleted in a row
-        if not awful.tag.selected(scr) then 
-          awful.tag.viewonly(tags[awful.util.cycle(#tags, idx - 1)]) 
-        end
+    -- if the current tag is being deleted, move to a previous
+    if t == sel and #tags > 1 then
+      awful.tag.history.restore(scr)
+      -- this is supposed to cycle if history is invalid?
+      -- e.g. if many tags are deleted in a row
+      if not awful.tag.selected(scr) then
+        awful.tag.viewonly(tags[awful.util.cycle(#tags, idx - 1)])
       end
-
-      t.screen = nil
-      awful.hooks.user.call("tags", scr)
     end
+
+    t.screen = nil
+    awful.hooks.user.call("tags", scr)
+
     if client.focus then client.focus:raise() end
   end
 end
