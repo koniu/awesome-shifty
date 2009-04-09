@@ -467,6 +467,7 @@ function match(c)
           if a.intrusive ~=nil then intrusive = a.intrusive end
           if a.fullscreen ~=nil then c.fullscreen = a.fullscreen end
           if a.honorsizehints ~=nil then c.size_hints_honor = a.honorsizehints end
+          if a.kill ~=nil then c:kill(); return end
         end
       end
     end
