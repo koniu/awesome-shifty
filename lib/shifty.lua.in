@@ -464,9 +464,7 @@ function match(c)
           else
             target_screen = c.screen
           end
-          if a.tag then
-            target_tag = a.tag
-          end
+          if a.tag then target_tag = a.tag end
           if a.float then awful.client.floating.set( c, true) end
           if a.geometry ~=nil then c:geometry({ x = a.geometry[1], y = a.geometry[2], width = a.geometry[3], height = a.geometry[4] }) end
           if a.slave ~=nil and a.slave then awful.client.setslave(c) end
@@ -492,18 +490,13 @@ function match(c)
     awful.placement.no_offscreen(c) -- this always seems to stick the client at 0,0 (incl titlebar)
   end
 
-  -- if not matched or matches currently selected, see if we can leave at the current tag
+  -- select target tag if unset
   local sel = awful.tag.selected(c.screen)
-  if #screen[c.screen]:tags() > 0 and (not target_tag or (sel and target_tag == sel.name)) then
-    if not (awful.tag.getproperty(sel,"exclusive") or awful.tag.getproperty(sel,"solitary")) or intrusive  then
-      target = sel
-    end 
-  end
-
-  -- if still unmatched, try guessing the tag from transient_for or class
-  if not target_tag and not target then
+  if not target_tag then
     if c.transient_for then
-      target_tag = c.transient_for:tags()[1] --FIXME: should make target_tag a table
+      target = c.transient_for:tags()[1] --FIXME: should make target_tag a table
+    elseif not (awful.tag.getproperty(sel,"exclusive") or awful.tag.getproperty(sel,"solitary")) or intrusive then
+      target = sel
     elseif config.guess_name and cls then
       target_tag = cls:lower()
     else
@@ -511,13 +504,15 @@ function match(c)
     end
   end
 
-  -- get/create target tag and move the client
+  -- translate target name to tag object, creating one if needed
   if target_tag then
     target = name2tag(target_tag, target_screen)
     if not target or (awful.tag.getproperty(target,"solitary") and #target:clients() > 0 and not intrusive) then
       target = add({ name = target_tag, noswitch = true, matched = true, screen = target_screen }) 
     end
   end
+
+  -- set client's screen/tag if needed
   if target then c:tags({ target }) end
   if target_screen and c.screen ~= target_screen then c.screen = target_screen end
 
