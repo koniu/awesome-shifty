@@ -112,7 +112,7 @@ function rename(tag, prefix, no_selectall, initial)
     completion,
     awful.util.getdir("cache") .. "/history_tags", nil,
     function () if initial and t.name == before then del(t)
-      else awful.tag.setproperty(t,"initial",true); set(t) end
+      else set(t, { initial = true }) end
       awful.hooks.user.call("tags", scr)
     end
     )
@@ -303,6 +303,13 @@ function set(t, args)
     table.insert(tags, idx, t)
   end
 
+  if args.initial then
+    local spawn = args.spawn or preset.spawn or config.defaults.spawn
+    local run = args.run or preset.run or config.defaults.run
+    if spawn and args.matched ~= true then awful.util.spawn(spawn, scr) end
+    if run then run(t) end
+  end
+
   -- push new tag table and restore properties
   dump_properties()
   dump[scr][t] = props
@@ -357,17 +364,11 @@ function add(args)
   -- initialize a new tag object and its data structure
   local t = tag( name )
   -- initial flag is used in set() so it must be initialized here
-  awful.tag.setproperty(t,"initial", true)
+  args.initial = true
 
   -- apply tag settings
   set(t, args)
 
-  if config.tags[name] ~= nil then
-    local spawn = config.tags[name].spawn or config.defaults.spawn or nil
-  end
-  local run = args.run or config.defaults.run
-  if spawn and args.matched ~= true then awful.util.spawn(spawn, scr) end
-  if run then run(t) end
   -- unless forbidden or if first tag on the screen, show the tag
   if not (awful.tag.getproperty(t,"nopopup") or args.noswitch) or #screen[scr]:tags() == 1 then awful.tag.viewonly(t) end
 
@@ -494,15 +495,13 @@ function match(c)
   -- if not matched or matches currently selected, see if we can leave at the current tag
   local sel = awful.tag.selected(c.screen)
   if #screen[c.screen]:tags() > 0 and (not target_tag or (sel and target_tag == sel.name)) then
-    if not (awful.tag.getproperty(sel,"exclusive") or awful.tag.getproperty(sel,"solitary")) or intrusive  then 
-      client.focus = c
-      c:raise()
-      return
+    if not (awful.tag.getproperty(sel,"exclusive") or awful.tag.getproperty(sel,"solitary")) or intrusive  then
+      target = sel
     end 
   end
 
   -- if still unmatched, try guessing the tag from transient_for or class
-  if not target_tag then
+  if not target_tag and not target then
     if c.transient_for then
       target_tag = c.transient_for:tags()[1] --FIXME: should make target_tag a table
     elseif config.guess_name and cls then
@@ -518,8 +517,8 @@ function match(c)
     if not target or (awful.tag.getproperty(target,"solitary") and #target:clients() > 0 and not intrusive) then
       target = add({ name = target_tag, noswitch = true, matched = true, screen = target_screen }) 
     end
-    c:tags({ target })
   end
+  if target then c:tags({ target }) end
   if target_screen and c.screen ~= target_screen then c.screen = target_screen end
 
   -- if target different from current tag, switch unless nopopup
