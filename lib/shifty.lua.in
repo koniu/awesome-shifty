@@ -241,7 +241,7 @@ function set(t, args)
 
   -- get the name and preset
   local name = args.name or t.name
-  local preset = config.tags[name] or {}
+  local preset = (args.initial and config.tags[name]) or {}
 
   -- try to get position from then name
   if not (args.position or preset.position) and config.guess_position then
