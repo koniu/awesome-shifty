@@ -303,6 +303,13 @@ function set(t, args)
     table.insert(tags, idx, t)
   end
 
+  -- push new tag table and restore properties
+  dump_properties()
+  dump[scr][t] = props
+  screen[scr]:tags(tags)
+  restore_properties()
+
+  -- execute run/spawn
   if args.initial then
     local spawn = args.spawn or preset.spawn or config.defaults.spawn
     local run = args.run or preset.run or config.defaults.run
@@ -310,11 +317,6 @@ function set(t, args)
     if run then run(t) end
   end
 
-  -- push new tag table and restore properties
-  dump_properties()
-  dump[scr][t] = props
-  screen[scr]:tags(tags)
-  restore_properties()
   return t
 end
 --}}}
