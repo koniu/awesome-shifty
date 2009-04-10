@@ -685,6 +685,7 @@ function completion(cmd, cur_pos, ncomp)
 end
 --}}}
 
+awful.hooks.manage.unregister(awful.tag.withcurrent)
 awful.hooks.tags.register(sweep)
 awful.hooks.arrange.register(sweep)
 awful.hooks.clients.register(sweep)
