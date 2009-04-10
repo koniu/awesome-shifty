@@ -475,6 +475,9 @@ function match(c)
           if a.fullscreen ~=nil then c.fullscreen = a.fullscreen end
           if a.honorsizehints ~=nil then c.size_hints_honor = a.honorsizehints end
           if a.kill ~=nil then c:kill(); return end
+          if a.ontop ~= nil then c.ontop = a.ontop end
+          if a.above ~= nil then c.above = a.above end
+          if a.below ~= nil then c.below = a.below end
         end
       end
     end
