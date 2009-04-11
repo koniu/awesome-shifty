@@ -599,14 +599,6 @@ function init()
         add({ name = i, persist = true, screen = scr, layout = j.layout, mwfact = j.mwfact }) 
     end
   end
-
-  -- try and prevent ugly awesome 'default' tag from appearing
-  for s = 1,numscr do
-    if #screen[s]:tags() < 1 then
---      del(name2tag("default"))
---      add({ name = "1:shifty", persist = true, screen = s, layout = (config.defaults.layout or awful.util.suit.tile)})
-    end
-  end
 end
 --}}}
 
