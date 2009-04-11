@@ -474,6 +474,7 @@ function match(c)
           if a.nofocus ~= nil then nofocus = a.nofocus end
           if a.keys ~= nil then keys = a.keys end
           if a.hide ~= nil then c.hide = a.hide end
+          if a.minimized ~= nil then c.minimized = a.minimized end
         end
       end
     end
@@ -522,7 +523,7 @@ function match(c)
     awful.tag.viewonly(target)
   end
 
-  if not (nofocus or c.hide) then
+  if not (nofocus or c.hide or c.minimized) then
     client.focus = c
     c:raise()
   end
