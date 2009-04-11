@@ -475,6 +475,7 @@ function match(c)
           if a.keys ~= nil then keys = a.keys end
           if a.hide ~= nil then c.hide = a.hide end
           if a.minimized ~= nil then c.minimized = a.minimized end
+          if a.dockable ~= nil then awful.client.dockable.set(c, a.dockable) end
         end
       end
     end
