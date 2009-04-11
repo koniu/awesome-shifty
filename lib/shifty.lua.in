@@ -427,7 +427,7 @@ end
 --{{{ match : handles app->tag matching, a replacement for the manage hook in
 --            rc.lua
 --@param c : client to be matched
-function match(c)
+function match(c, startup)
   local target_tag, target_screen, target, nopopup, intrusive, keys = nil
   local typ = c.type
   local cls = c.class
@@ -462,7 +462,7 @@ function match(c)
           if a.float ~= nil then awful.client.floating.set(c, a.float) end
           if a.geometry ~=nil then c:geometry({ x = a.geometry[1], y = a.geometry[2], width = a.geometry[3], height = a.geometry[4] }) end
           if a.slave ~=nil and a.slave then awful.client.setslave(c) end
-          if a.nopopup ~=nil then nopopup = a.nopopup; c.urgent = true end
+          if a.nopopup ~=nil then nopopup = a.nopopup; if not startup then c.urgent = true end end
           if a.intrusive ~=nil then intrusive = a.intrusive end
           if a.fullscreen ~=nil then c.fullscreen = a.fullscreen end
           if a.honorsizehints ~=nil then c.size_hints_honor = a.honorsizehints end
