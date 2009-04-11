@@ -473,6 +473,7 @@ function match(c)
           if a.buttons ~= nil then c:buttons(a.buttons) end
           if a.nofocus ~= nil then nofocus = a.nofocus end
           if a.keys ~= nil then keys = a.keys end
+          if a.hide ~= nil then c.hide = a.hide end
         end
       end
     end
@@ -521,7 +522,7 @@ function match(c)
     awful.tag.viewonly(target)
   end
 
-  if not nofocus then
+  if not (nofocus or c.hide) then
     client.focus = c
     c:raise()
   end
