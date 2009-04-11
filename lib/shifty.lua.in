@@ -237,24 +237,25 @@ end
 function set(t, args)
   if not t then return end
   if not args then args = {} end
-  local guessed_position = nil
 
-  -- get the name and preset
-  local name = args.name or t.name
-  local preset = (args.initial and config.tags[name]) or {}
+  -- set the name
+  t.name = args.name or t.name
 
-  -- try to get position from then name
-  if not (args.position or preset.position) and config.guess_position then
-    local num = name:find('^[1-9]')
-    if num then guessed_position = tonumber(name:sub(1,1)) end
-  end
+  -- attempt to load preset on initial run
+  local preset = (args.initial and config.tags[t.name]) or {}
 
-  -- set tag attributes screen and name are directly set FIXME hacky
+  -- pick screen and get its tag table
   local scr = args.screen or preset.screen or t.screen or mouse.screen
   local tags = screen[scr]:tags()
-  t.name = name
 
-  -- configs or sane defaults
+  -- try to guess position from the name
+  local guessed_position = nil
+  if not (args.position or preset.position) and config.guess_position then
+    local num = t.name:find('^[1-9]')
+    if num then guessed_position = tonumber(t.name:sub(1,1)) end
+  end
+
+  -- select from args, preset, getproperty, config.defaults.configs or defaults
   local props = {
     layout = select{ args.layout, preset.layout, awful.tag.getproperty(t,"layout"), config.defaults.layout, awful.layout.suit.tile },
     mwfact = select{ args.mwfact, preset.mwfact, awful.tag.getproperty(t,"mwfact"), config.defaults.mwfact, 0.55 },
@@ -294,13 +295,11 @@ function set(t, args)
     idx = #tags + 1
   end
 
-  -- if tag already in the table, remove it
-  if idx and t_idx then table.remove(tags, t_idx) end
-
-  -- if we have an index, insert the notification
+  -- if we have a new index, remove from old index and insert
   if idx then
-    index_cache[t.name] = idx
+    if t_idx then table.remove(tags, t_idx) end
     table.insert(tags, idx, t)
+    index_cache[t.name] = idx
   end
 
   -- push new tag table and restore properties
