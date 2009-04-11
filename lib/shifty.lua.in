@@ -477,6 +477,7 @@ function match(c)
           if a.minimized ~= nil then c.minimized = a.minimized end
           if a.dockable ~= nil then awful.client.dockable.set(c, a.dockable) end
           if a.urgent ~= nil then c.urgent = a.urgent end
+          if a.opacity ~= nil then c.opacity = a.opacity end
         end
       end
     end
