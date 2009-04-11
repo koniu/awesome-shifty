@@ -40,6 +40,7 @@ local tostring = tostring
 local tonumber = tonumber
 local wibox = wibox
 local print = print
+local dbg=dbg
 module("shifty")
 
 index_cache = {}
@@ -92,7 +93,7 @@ function rename(tag, prefix, no_selectall, initial)
   local scr = t.screen
   local bg = nil
   local fg = nil
-  local text = prefix or t.name or ""
+  local text = prefix or (t.name ~= "_" and t.name) or " "
   local before = t.name
 
   if t == awful.tag.selected(scr) then 
@@ -102,11 +103,10 @@ function rename(tag, prefix, no_selectall, initial)
     bg = theme.bg_normal or '#222222'
     fg = theme.fg_urgent or '#ffffff'
   end
-  text = '<span color="'..fg..'">'..text..'</span>'
 
   awful.prompt.run( { 
     fg_cursor = fg, bg_cursor = bg, ul_cursor = "single",
-    text = t.name, selectall = not no_selectall,  },
+    text = text, selectall = not no_selectall,  },
     taglist[scr][tag2index(scr,t)*2],
     function (name) if name:len() > 0 then t.name = name; end end, 
     completion,
@@ -361,7 +361,7 @@ function add(args)
   if args.scr and (args.scr > 0) and (args.screen <= screen.count()) then 
     scr = args.scr 
   end
-  local name = args.name or ( args.rename and args.rename .. "_" ) or "_" --FIXME: pretend prompt '_'
+  local name = args.name or "_"
 
   -- initialize a new tag object and its data structure
   local t = tag( name )
@@ -375,9 +375,17 @@ function add(args)
   if not (awful.tag.getproperty(t,"nopopup") or args.noswitch) or #screen[scr]:tags() == 1 then awful.tag.viewonly(t) end
 
   -- get the name or rename
-  if args.name then t.name = args.name
-  elseif args.position then rename(t, args.position .. ":", true, true)
-  else rename(t, "", nil, true)
+  if args.name then
+    t.name = args.name
+  else
+    -- FIXME: hack to delay rename for un-named tags for tackling taglist refresh
+    --        which disabled prompt from being rendered until input
+    if args.position then
+      f = function() rename(t, args.rename, true, true); awful.hooks.timer.unregister(f) end
+    else
+      f = function() rename(t, nil, nil, true); awful.hooks.timer.unregister(f) end
+    end
+    awful.hooks.timer.register(0.01, f)
   end
 
   return t
@@ -687,6 +695,7 @@ function addtables(t1,t2)
   end
   return v
 end
+--}}}
 
 awful.hooks.manage.unregister(awful.tag.withcurrent)
 awful.hooks.tags.register(sweep)
