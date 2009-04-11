@@ -488,7 +488,7 @@ function match(c)
   if not target_tag then
     if c.transient_for then
       target = c.transient_for:tags()[1] --FIXME: should make target_tag a table
-    elseif not (awful.tag.getproperty(sel,"exclusive") or awful.tag.getproperty(sel,"solitary")) or intrusive then
+    elseif sel and (not (awful.tag.getproperty(sel,"exclusive") or awful.tag.getproperty(sel,"solitary")) or intrusive) then
       target = sel
     elseif config.guess_name and cls then
       target_tag = cls:lower()
