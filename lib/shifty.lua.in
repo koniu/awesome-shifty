@@ -459,7 +459,7 @@ function match(c)
             target_screen = mouse.screen
           end
           if a.tag then target_tag = a.tag end
-          if a.float then awful.client.floating.set( c, true) end
+          if a.float ~= nil then awful.client.floating.set(c, a.float) end
           if a.geometry ~=nil then c:geometry({ x = a.geometry[1], y = a.geometry[2], width = a.geometry[3], height = a.geometry[4] }) end
           if a.slave ~=nil and a.slave then awful.client.setslave(c) end
           if a.nopopup ~=nil then nopopup = a.nopopup end
