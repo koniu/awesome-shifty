@@ -417,7 +417,7 @@ function match(c, startup)
           if a.float ~= nil then awful.client.floating.set(c, a.float) end
           if a.geometry ~=nil then c:geometry({ x = a.geometry[1], y = a.geometry[2], width = a.geometry[3], height = a.geometry[4] }) end
           if a.slave ~=nil and a.slave then awful.client.setslave(c) end
-          if a.nopopup ~=nil then nopopup = a.nopopup; if not startup then c.urgent = true end end
+          if a.nopopup ~=nil then nopopup = a.nopopup end
           if a.intrusive ~=nil then intrusive = a.intrusive end
           if a.fullscreen ~=nil then c.fullscreen = a.fullscreen end
           if a.honorsizehints ~=nil then c.size_hints_honor = a.honorsizehints end
@@ -476,9 +476,13 @@ function match(c, startup)
   if target then c:tags({ target }) end
   if target_screen and c.screen ~= target_screen then c.screen = target_screen end
 
-  -- if target different from current tag, switch unless nopopup
-  if target and (not (awful.tag.getproperty(target,"nopopup") or nopopup) and target ~= sel) then
-    awful.tag.viewonly(target)
+  -- if target different from current tag, switch or highlight
+  if target and target ~= sel then
+    if not(awful.tag.getproperty(target,"nopopup") or nopopup) then
+      awful.tag.viewonly(target)
+    elseif not startup then
+      c.urgent = true
+    end
   end
 
   if not (nofocus or c.hide or c.minimized) then
