@@ -151,33 +151,6 @@ function select(args)
 end
 --}}}
 
---{{{ dump_properties : FIXME workaround for FS#493
--- http://awesome.naquadah.org/bugs/index.php?do=details&task_id=493
-dump = {}
-local function dump_properties()
-  for i = 1, screen.count() do
-    dump[i] = {}
-    for j, t in ipairs(screen[i]:tags()) do
-      dump[i][t] = awful.tag.getdata(t)
-    end
-  end
-end
---}}}
-
---{{{ restore_properties : FIXME workaround for FS#493
--- http://awesome.naquadah.org/bugs/index.php?do=details&task_id=493
-local function restore_properties()
-  for i = 1, screen.count() do
-    for t, props in pairs(dump[i]) do
-      for p, v in pairs(props) do
-        awful.tag.setproperty(t, p, v )
-      end
-    end
-  end
-  dump = {}
-end
---}}}
-
 --{{{ tagtoscr : move an entire tag to another screen
 --
 --@param scr : the screen to move tag to
@@ -286,11 +259,9 @@ function set(t, args)
     index_cache[t.name] = idx
   end
 
-  -- push new tag table and restore properties
-  dump_properties()
-  dump[scr][t] = props
+  -- set tag properties and push the new tag table
+  for prop, val in pairs(props) do awful.tag.setproperty(t, prop, val) end
   screen[scr]:tags(tags)
-  restore_properties()
 
   -- execute run/spawn
   if args.initial then
