@@ -68,10 +68,9 @@ end
 --@param tag: tag object to be renamed
 --@param prefix: if any prefix is to be added
 --@param no_selectall:
---@param initial: boolean if this is initial creation of tag
 --
 -- FIXME: promptbox is located incorrectly for scr == 2
-function rename(tag, prefix, no_selectall, initial)
+function rename(tag, prefix, no_selectall)
   local theme = beautiful.get()
   local t = tag or awful.tag.selected(mouse.screen)
   local scr = t.screen
@@ -95,8 +94,13 @@ function rename(tag, prefix, no_selectall, initial)
     function (name) if name:len() > 0 then t.name = name; end end, 
     completion,
     awful.util.getdir("cache") .. "/history_tags", nil,
-    function () if initial and t.name == before then del(t)
-      else set(t, { initial = true }) end
+    function ()
+      if t.name == before then
+        if awful.tag.getproperty(t, "initial") then del(t) end
+      else
+        awful.tag.setproperty(t, "initial", true)
+        set(t)
+      end
       awful.hooks.user.call("tags", scr)
     end
     )
@@ -199,7 +203,7 @@ function set(t, args)
   t.name = args.name or t.name
 
   -- attempt to load preset on initial run
-  local preset = (args.initial and config.tags[t.name]) or {}
+  local preset = (awful.tag.getproperty(t, "initial") and config.tags[t.name]) or {}
 
   -- pick screen and get its tag table
   local scr = args.screen or preset.screen or t.screen or mouse.screen
@@ -264,11 +268,12 @@ function set(t, args)
   screen[scr]:tags(tags)
 
   -- execute run/spawn
-  if args.initial then
+  if awful.tag.getproperty(t, "initial") then
     local spawn = args.spawn or preset.spawn or config.defaults.spawn
     local run = args.run or preset.run or config.defaults.run
     if spawn and args.matched ~= true then awful.util.spawn(spawn, scr) end
     if run then run(t) end
+    awful.tag.setproperty(t, "initial", nil)
   end
 
   return t
@@ -319,8 +324,9 @@ function add(args)
 
   -- initialize a new tag object and its data structure
   local t = tag( name )
-  -- initial flag is used in set() so it must be initialized here
-  args.initial = true
+
+  -- tell set() that this is the first time
+  awful.tag.setproperty(t, "initial", true)
 
   -- apply tag settings
   set(t, args)
@@ -335,9 +341,9 @@ function add(args)
     -- FIXME: hack to delay rename for un-named tags for tackling taglist refresh
     --        which disabled prompt from being rendered until input
     if args.position then
-      f = function() rename(t, args.rename, true, true); awful.hooks.timer.unregister(f) end
+      f = function() rename(t, args.rename, true); awful.hooks.timer.unregister(f) end
     else
-      f = function() rename(t, nil, nil, true); awful.hooks.timer.unregister(f) end
+      f = function() rename(t); awful.hooks.timer.unregister(f) end
     end
     awful.hooks.timer.register(0.01, f)
   end
