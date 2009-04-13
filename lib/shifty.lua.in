@@ -76,7 +76,7 @@ function rename(tag, prefix, no_selectall)
   local scr = t.screen
   local bg = nil
   local fg = nil
-  local text = prefix or (t.name ~= "_" and t.name) or " "
+  local text = prefix or t.name
   local before = t.name
 
   if t == awful.tag.selected(scr) then 
@@ -100,6 +100,7 @@ function rename(tag, prefix, no_selectall)
       else
         awful.tag.setproperty(t, "initial", true)
         set(t)
+        awful.tag.setproperty(t, "initial", nil)
       end
       awful.hooks.user.call("tags", scr)
     end
@@ -274,7 +275,6 @@ function set(t, args)
     local run = args.run or preset.run or config.defaults.run
     if spawn and args.matched ~= true then awful.util.spawn(spawn, scr) end
     if run then run(t) end
-    awful.tag.setproperty(t, "initial", nil)
   end
 
   return t
@@ -321,7 +321,7 @@ function add(args)
   if args.scr and (args.scr > 0) and (args.screen <= screen.count()) then 
     scr = args.scr 
   end
-  local name = args.name or "_"
+  local name = args.name or " "
 
   -- initialize a new tag object and its data structure
   local t = tag( name )
