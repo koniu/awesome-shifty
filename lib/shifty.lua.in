@@ -232,6 +232,7 @@ function set(t, args)
     position = select{ args.position, preset.position, guessed_position, awful.tag.getproperty(t,"position" ) },
     skip_taglist = select{ args.skip_taglist, preset.skip_taglist, awful.tag.getproperty(t,"skip_taglist") },
     icon = select{ args.icon and image(args.icon), preset.icon and image(preset.icon), awful.tag.getproperty(t,"icon"), config.defaults.icon and image(config.defaults.icon) },
+    icon_only = select{ args.icon_only, preset.icon_only, awful.tag.getproperty(t,"icon_only"), config.defaults.icon_only },
   }
 
   -- calculate desired taglist index
