@@ -224,16 +224,15 @@ function set(t, args)
     nmaster = select{ args.nmaster, preset.nmaster, awful.tag.getproperty(t,"nmaster"), config.defaults.nmaster, 1 },
     ncol = select{ args.ncol, preset.ncol, awful.tag.getproperty(t,"ncol"), config.defaults.ncol, 1 },
     matched = select{ args.matched, awful.tag.getproperty(t,"matched") },
-    notext = select{ args.notext, preset.notext, awful.tag.getproperty(t,"notext"), config.defaults.notext },
     exclusive = select{ args.exclusive, preset.exclusive, awful.tag.getproperty(t,"exclusive"), config.defaults.exclusive },
     persist = select{ args.persist, preset.persist, awful.tag.getproperty(t,"persist"), config.defaults.persist },
     nopopup = select{ args.nopopup, preset.nopopup, awful.tag.getproperty(t,"nopopup"), config.defaults.nopopup },
     leave_kills = select{ args.leave_kills, preset.leave_kills, awful.tag.getproperty(t,"leave_kills"), config.defaults.leave_kills },
     solitary = select{ args.solitary, preset.solitary, awful.tag.getproperty(t,"solitary"), config.defaults.solitary },
     position = select{ args.position, preset.position, guessed_position, awful.tag.getproperty(t,"position" ) },
-    skip_taglist = select{ args.skip_taglist, preset.skip_taglist, awful.tag.getproperty(t,"skip_taglist") },
     icon = select{ args.icon and image(args.icon), preset.icon and image(preset.icon), awful.tag.getproperty(t,"icon"), config.defaults.icon and image(config.defaults.icon) },
     icon_only = select{ args.icon_only, preset.icon_only, awful.tag.getproperty(t,"icon_only"), config.defaults.icon_only },
+    sweep_delay = select{ args.sweep_delay, preset.sweep_delay, awful.tag.getproperty(t,"sweep_delay"), config.defaults.sweep_delay },
   }
 
   -- calculate desired taglist index
@@ -507,7 +506,14 @@ function sweep()
       if #t:clients() == 0 then
         if not awful.tag.getproperty(t,"persist") and awful.tag.getproperty(t,"used") then
           if awful.tag.getproperty(t,"deserted") or not awful.tag.getproperty(t,"leave_kills") then
-            del(t)
+            local delay = awful.tag.getproperty(t,"sweep_delay")
+            if delay then
+              --FIXME: global f, what if more than one at a time is being swept
+              f = function() del(t); awful.hooks.timer.unregister(f) end
+              awful.hooks.timer.register(delay, f)
+            else
+              del(t)
+            end
           else
             if not t.selected and awful.tag.getproperty(t,"visited") then awful.tag.setproperty(t,"deserted", true) end
           end
