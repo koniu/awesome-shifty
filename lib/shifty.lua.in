@@ -35,6 +35,7 @@ config.defaults = {}
 config.guess_name = true
 config.guess_position = true
 config.remember_index = true
+config.default_name = "new"
 config.clientkeys = {}
 
 --{{{ name2tag: matches string 'name' to return a tag object 
@@ -466,7 +467,7 @@ function match(c, startup)
     elseif config.guess_name and cls then
       target_tag = cls:lower()
     else
-      target_tag = "new"
+      target_tag = config.default_name
     end
   end
 
