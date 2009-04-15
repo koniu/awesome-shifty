@@ -446,7 +446,7 @@ function match(c, startup)
   end
 
   -- set key bindings
-  c:keys(addtables(config.clientkeys, keys or {}))
+  c:keys(awful.util.table.join(config.clientkeys, keys or {}))
 
   -- set properties of floating clients
   if awful.client.floating.get(c) then
@@ -653,16 +653,6 @@ function completion(cmd, cur_pos, ncomp)
 
   -- return match and position
   return matches[ncomp], cur_pos
-end
---}}}
-
---{{{ addtables : helper function adding two tables together
-function addtables(t1,t2)
-  local v = t1
-  for i,j in pairs(t2) do
-    table.insert(v,j)
-  end
-  return v
 end
 --}}}
 
