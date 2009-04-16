@@ -386,7 +386,7 @@ end
 --            rc.lua
 --@param c : client to be matched
 function match(c, startup)
-  local target_tag, target_screen, target, nopopup, intrusive, keys = nil
+  local target_tag, target_screen, target, nopopup, intrusive, keys, nofocus = nil
   local typ = c.type
   local cls = c.class
   local inst = c.instance
@@ -488,9 +488,16 @@ function match(c, startup)
     end
   end
 
+  -- focus and raise accordingly or lower if supressed
   if not (nofocus or c.hide or c.minimized) then
-    client.focus = c
+    if (awful.tag.getproperty(target,"nopopup") or nopopup) and (target and target ~= sel) then
+      awful.client.focus.history.add(c)
+    else
+      client.focus = c
+    end
     c:raise()
+  else
+    c:lower()
   end
 end
 --}}}
