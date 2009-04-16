@@ -21,6 +21,7 @@ local pairs = pairs
 local io = io
 local tonumber = tonumber
 local wibox = wibox
+local root = root
 module("shifty")
 
 index_cache = {}
@@ -33,6 +34,7 @@ config.guess_position = true
 config.remember_index = true
 config.default_name = "new"
 config.clientkeys = {}
+config.globalkeys = nil
 
 --{{{ name2tag: matches string 'name' to return a tag object 
 -- @param name : name of tag to find
@@ -659,9 +661,18 @@ function completion(cmd, cur_pos, ncomp)
 end
 --}}}
 
+-- {{{ tagkeys : hook function that sets keybindings per tag
+function tagkeys(s)
+  if not config.globalkeys then return end
+  local sel = awful.tag.selected(s)
+  root.keys(awful.util.table.join(config.globalkeys, sel and config.tags[sel.name] and config.tags[sel.name].keys or {}))
+end
+-- }}}
+
 awful.hooks.manage.unregister(awful.tag.withcurrent)
 awful.hooks.tags.register(sweep)
 awful.hooks.arrange.register(sweep)
+awful.hooks.arrange.register(tagkeys)
 awful.hooks.clients.register(sweep)
 awful.hooks.manage.register(match)
 
