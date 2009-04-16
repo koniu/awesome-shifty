@@ -388,12 +388,13 @@ end
 --            rc.lua
 --@param c : client to be matched
 function match(c, startup)
-  local target_tag, target_screen, target, nopopup, intrusive, keys, nofocus = nil
+  local target_tag, target_screen, target, nopopup, intrusive, nofocus = nil
   local typ = c.type
   local cls = c.class
   local inst = c.instance
   local role = c.role
   local name = c.name
+  local keys = config.clientkeys or c:keys() or {}
 
   c.border_color = beautiful.border_normal
   c.border_width = beautiful.border_width
@@ -432,7 +433,7 @@ function match(c, startup)
           if a.below ~= nil then c.below = a.below end
           if a.buttons ~= nil then c:buttons(a.buttons) end
           if a.nofocus ~= nil then nofocus = a.nofocus end
-          if a.keys ~= nil then keys = a.keys end
+          if a.keys ~= nil then keys = awful.util.table.join(keys, a.keys) end
           if a.hide ~= nil then c.hide = a.hide end
           if a.minimized ~= nil then c.minimized = a.minimized end
           if a.dockable ~= nil then awful.client.dockable.set(c, a.dockable) end
@@ -444,7 +445,7 @@ function match(c, startup)
   end
 
   -- set key bindings
-  c:keys(awful.util.table.join(config.clientkeys, keys or {}))
+  c:keys(keys)
 
   -- set properties of floating clients
   if awful.client.floating.get(c) then
