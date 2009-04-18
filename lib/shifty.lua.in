@@ -99,7 +99,6 @@ function rename(tag, prefix, no_selectall)
       else
         awful.tag.setproperty(t, "initial", true)
         set(t)
-        awful.tag.setproperty(t, "initial", nil)
       end
       awful.hooks.user.call("tags", scr)
     end
@@ -273,6 +272,7 @@ function set(t, args)
     local run = args.run or preset.run or config.defaults.run
     if spawn and args.matched ~= true then awful.util.spawn(spawn, true, scr) end
     if run then run(t) end
+    awful.tag.setproperty(t, "initial", nil)
   end
 
   return t
@@ -339,6 +339,7 @@ function add(args)
   else
     -- FIXME: hack to delay rename for un-named tags for tackling taglist refresh
     --        which disabled prompt from being rendered until input
+    awful.tag.setproperty(t, "initial", true)
     if args.position then
       f = function() rename(t, args.rename, true); awful.hooks.timer.unregister(f) end
     else
