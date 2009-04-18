@@ -24,7 +24,6 @@ local wibox = wibox
 local root = root
 module("shifty")
 
-index_cache = {}
 config = {}
 config.tags = {}
 config.apps = {}
@@ -35,6 +34,11 @@ config.remember_index = true
 config.default_name = "new"
 config.clientkeys = {}
 config.globalkeys = nil
+config.prompt_sources = { "config_tags", "config_apps", "existing", "history" }
+config.prompt_matches = { "^", ":", "" }
+
+local matchp = ""
+local index_cache = {}
 
 --{{{ name2tag: matches string 'name' to return a tag object 
 -- @param name : name of tag to find
@@ -617,40 +621,51 @@ end
 --{{{ completion : prompt completion
 --
 function completion(cmd, cur_pos, ncomp)
-  local list = {}
+  local list = {
+    config_tags = {},
+    config_apps = {},
+    existing = {},
+    history = {}
+  }
 
   -- gather names from config.tags
-  for n, p in pairs(config.tags) do table.insert(list, n) end
+  for n, p in pairs(config.tags) do table.insert(list.config_tags, n) end
 
   -- gather names from config.apps
   for i, p in pairs(config.apps) do
-    if p.tag then table.insert(list, p.tag) end
+    if p.tag then table.insert(list.config_apps, p.tag) end
   end
 
   -- gather names from existing tags, starting with the current screen
   for i = 1, screen.count() do
     local tags = screen[i]:tags()
     local s = awful.util.cycle(screen.count(), mouse.screen + i - 1)
-    for j, t in pairs(tags) do table.insert(list, t.name) end
+    for j, t in pairs(tags) do table.insert(list.existing, t.name) end
   end
 
   -- gather names from history
   f = io.open(awful.util.getdir("cache") .. "/history_tags")
-  for name in f:lines() do table.insert(list, name) end
+  for name in f:lines() do table.insert(list.history, name) end
   f:close()
 
-  -- do nothing if it's pointless
-  if cur_pos ~= #cmd + 1 and cmd:sub(cur_pos, cur_pos) ~= " " then
-    return cmd, cur_pos
-  elseif #cmd == 0 then
-    return cmd, cur_pos
+  -- if empty, match all
+  if #cmd == 0 or cmd == " " then cmd = "" end
+
+  -- match all up to the cursor if moved or no matchphrase
+  if matchp == "" or cmd:sub(cur_pos, cur_pos+#matchp) ~= matchp then
+    matchp = cmd:sub(1, cur_pos)
   end
 
-  -- find matching indices
+  -- find matching commands
   local matches = {}
-  for i, j in ipairs(list) do
-    if list[i]:find("^" .. cmd:sub(1, cur_pos)) then
-      table.insert(matches, list[i])
+  for i, src in ipairs(config.prompt_sources) do
+    local source = list[src]
+    for j, name in ipairs(source) do
+      for k, matcher in ipairs(config.prompt_matches) do
+        if name:find(matcher .. matchp) then
+          table.insert(matches, name)
+        end
+      end
     end
   end
 
@@ -662,6 +677,13 @@ function completion(cmd, cur_pos, ncomp)
 
   -- cycle
   while ncomp > #matches do ncomp = ncomp - #matches end
+
+  -- put cursor at the end of the matched phrase
+  if #matches == 1 then
+    cur_pos = #matches[ncomp] + 1
+  else
+    cur_pos = matches[ncomp]:find(matchp) + #matchp
+  end
 
   -- return match and position
   return matches[ncomp], cur_pos
