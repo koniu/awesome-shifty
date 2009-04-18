@@ -388,7 +388,7 @@ end
 --            rc.lua
 --@param c : client to be matched
 function match(c, startup)
-  local target_tag, target_screen, target, nopopup, intrusive, nofocus = nil
+  local target_tag, target_screen, target, nopopup, intrusive, nofocus, run = nil
   local typ = c.type
   local cls = c.class
   local inst = c.instance
@@ -440,6 +440,7 @@ function match(c, startup)
           if a.urgent ~= nil then c.urgent = a.urgent end
           if a.opacity ~= nil then c.opacity = a.opacity end
           if a.titlebar ~= nil then awful.titlebar.add(c, { modkey = modkey }) end
+          if a.run ~= nil then run = a.run end
         end
       end
     end
@@ -503,6 +504,9 @@ function match(c, startup)
   else
     c:lower()
   end
+
+  -- execute run function if specified
+  if run then run(c, target) end
 end
 --}}}
 
