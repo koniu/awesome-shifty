@@ -1,6 +1,6 @@
 --- Shifty: Dynamic tagging library for awesome3-git
 -- @author koniu &lt;gkusnierz@gmail.com&gt;
--- @author bioe007 &lt;hargrave@gmail.com&gt;
+-- @author bioe007 &lt;perry.hargrave@gmail.com&gt;
 --
 -- http://awesome.naquadah.org/wiki/index.php?title=Shifty
 
@@ -164,32 +164,51 @@ end
 --@param t : the tag to be moved [awful.tag.selected()]
 --@return the tag
 function tagtoscr(scr,t)
+  -- break if called with an invalid screen number
   if not scr or scr < 1 or scr > screen.count() then return end
+  -- tag to move
   local otag = t or awful.tag.selected() 
+  -- store the old screen for history call later
   local oscr = otag.screen
-  local rel_scr = oscr - scr
-  local vargs = { screen = scr }
 
-  set(otag,vargs)
+  -- set default index
+  local idx = #screen[scr]:tags()+1
 
+  -- see if this tag has been configured with a position
+  local opos = awful.tag.getproperty(otag,"position")
+  if opos ~= nil then
+    -- check target screen for a new index
+    tgtscr_tags = screen[scr]:tags()
+    for i,t_tgtscr in ipairs(tgtscr_tags) do
+      t_pos_tgtscr = awful.tag.getproperty(t_tgtscr,"position")
+      if  t_pos_tgtscr > opos or t_pos_tgtscr == nil then
+        -- found index
+        idx = i
+        break
+      end
+    end
+  end
+
+  -- set screen and then reset tag to order properly
+  otag.screen = scr
+  set(otag, { index = idx  } )
   if #otag:clients() > 0 then
     for _ , c in ipairs(otag:clients()) do
       if not c.sticky then
         c.screen = scr
         c:tags( { otag } )
+      else
+        awful.client.toggletag(otag,c)
       end
     end
   end
+  -- fix taglist widget
   awful.hooks.user.call("tags",scr)
-
+  -- fix history on origin screen
   awful.tag.history.restore(oscr)
-
-  -- if this is a configured tag, then sort
-  if awful.tag.getproperty(otag,"position") ~= nil then
-    tsort(scr)
-  end
+  -- view and focus the moved tag
   awful.tag.viewonly(otag)
-  awful.screen.focus(rel_scr)
+  mouse.screen = scr
   return otag
 end
 ---}}}
@@ -280,36 +299,6 @@ function set(t, args)
   end
 
   return t
-end
---}}}
-
---{{{ tsort : to re-sort awesomes tags to follow shifty's config positions
---
---  @param scr : optional screen number [mouse.screen]
-function tsort(scr)
-  local scr = scr or mouse.screen
-  local tags = screen[scr]:tags()
-
-  local k = 1
-  for i=1,#tags do
-    ipos = awful.tag.getproperty(tags[i],"position")
-    -- bail if this is not a configured tag?
-    if ipos ~= nil then
-      nextpos = awful.tag.getproperty(tags[i+1], "position")
-      if nextpos ~= nil then
-        if ipos > nextpos then
-          k = 1
-          newpos = awful.tag.getproperty(tags[i+k], "position")
-          while newpos ~= nil and ipos > newpos and k <= #tags do
-            k = k+1
-            newpos = awful.tag.getproperty(tags[i+k], "position")
-          end
-          set(tags[i],{rel_index=k})
-          tsort(scr)
-        end
-      end
-    end
-  end
 end
 --}}}
 
