@@ -650,8 +650,8 @@ function completion(cmd, cur_pos, ncomp)
   local matches = {}
   for i, src in ipairs(config.prompt_sources) do
     local source = list[src]
-    for j, name in ipairs(source) do
-      for k, matcher in ipairs(config.prompt_matches) do
+    for j, matcher in ipairs(config.prompt_matches) do
+      for k, name in ipairs(source) do
         if name:find(matcher .. matchp) then
           table.insert(matches, name)
         end
