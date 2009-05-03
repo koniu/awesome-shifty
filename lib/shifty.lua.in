@@ -36,7 +36,7 @@ config.default_name = "new"
 config.clientkeys = {}
 config.globalkeys = nil
 config.prompt_sources = { "config_tags", "config_apps", "existing", "history" }
-config.prompt_matches = { "^", ":", "" }
+config.prompt_matchers = { "^", ":", "" }
 
 local matchp = ""
 local index_cache = {}
@@ -575,33 +575,46 @@ end
 
 --{{{ completion : prompt completion
 --
-function completion(cmd, cur_pos, ncomp)
-  local list = {
-    config_tags = {},
-    config_apps = {},
-    existing = {},
-    history = {}
+function completion(cmd, cur_pos, ncomp, sources, matchers)
+
+  -- get sources and matches tables
+  sources = sources or config.prompt_sources
+  matchers = matchers or config.prompt_matchers
+
+  local get_source = {
+    -- gather names from config.tags
+    config_tags = function()
+      local ret = {}
+      for n, p in pairs(config.tags) do table.insert(ret, n) end
+      return ret
+    end,
+    -- gather names from config.apps
+    config_apps = function()
+      local ret = {}
+      for i, p in pairs(config.apps) do
+        if p.tag then table.insert(ret, p.tag) end
+      end
+      return ret
+    end,
+    -- gather names from existing tags, starting with the current screen
+    existing = function()
+      local ret = {}
+      for i = 1, screen.count() do
+        local tags = screen[i]:tags()
+        local s = awful.util.cycle(screen.count(), mouse.screen + i - 1)
+        for j, t in pairs(tags) do table.insert(ret, t.name) end
+      end
+      return ret
+    end,
+    -- gather names from history
+    history = function()
+      local ret = {}
+      local f = io.open(awful.util.getdir("cache") .. "/history_tags")
+      for name in f:lines() do table.insert(ret, name) end
+      f:close()
+      return ret
+    end,
   }
-
-  -- gather names from config.tags
-  for n, p in pairs(config.tags) do table.insert(list.config_tags, n) end
-
-  -- gather names from config.apps
-  for i, p in pairs(config.apps) do
-    if p.tag then table.insert(list.config_apps, p.tag) end
-  end
-
-  -- gather names from existing tags, starting with the current screen
-  for i = 1, screen.count() do
-    local tags = screen[i]:tags()
-    local s = awful.util.cycle(screen.count(), mouse.screen + i - 1)
-    for j, t in pairs(tags) do table.insert(list.existing, t.name) end
-  end
-
-  -- gather names from history
-  f = io.open(awful.util.getdir("cache") .. "/history_tags")
-  for name in f:lines() do table.insert(list.history, name) end
-  f:close()
 
   -- if empty, match all
   if #cmd == 0 or cmd == " " then cmd = "" end
@@ -613,9 +626,9 @@ function completion(cmd, cur_pos, ncomp)
 
   -- find matching commands
   local matches = {}
-  for i, src in ipairs(config.prompt_sources) do
-    local source = list[src]
-    for j, matcher in ipairs(config.prompt_matches) do
+  for i, src in ipairs(sources) do
+    local source = get_source[src]()
+    for j, matcher in ipairs(matchers) do
       for k, name in ipairs(source) do
         if name:find(matcher .. matchp) then
           table.insert(matches, name)
