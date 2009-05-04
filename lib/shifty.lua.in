@@ -268,7 +268,7 @@ function set(t, args)
   if awful.tag.getproperty(t, "initial") then
     local spawn = args.spawn or preset.spawn or config.defaults.spawn
     local run = args.run or preset.run or config.defaults.run
-    if spawn and args.matched ~= true then awful.util.spawn(spawn, true, scr) end
+    if spawn and args.matched ~= true then awful.util.spawn_with_shell(spawn, scr) end
     if run then run(t) end
     awful.tag.setproperty(t, "initial", nil)
   end
