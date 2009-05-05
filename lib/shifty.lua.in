@@ -600,8 +600,8 @@ function completion(cmd, cur_pos, ncomp, sources, matchers)
     existing = function()
       local ret = {}
       for i = 1, screen.count() do
-        local tags = screen[i]:tags()
         local s = awful.util.cycle(screen.count(), mouse.screen + i - 1)
+        local tags = screen[s]:tags()
         for j, t in pairs(tags) do table.insert(ret, t.name) end
       end
       return ret
