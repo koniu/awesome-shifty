@@ -363,7 +363,7 @@ end
 --            rc.lua
 --@param c : client to be matched
 function match(c, startup)
-  local target_tag, target, nopopup, intrusive, nofocus, run, slave = nil
+  local target_tag, target, nopopup, intrusive, nofocus, run, slave, wfact
   local typ = c.type
   local cls = c.class
   local inst = c.instance
@@ -410,6 +410,7 @@ function match(c, startup)
           if a.titlebar ~= nil then awful.titlebar.add(c, { modkey = modkey }) end
           if a.run ~= nil then run = a.run end
           if a.sticky ~= nil then c.sticky = a.sticky end
+          if a.wfact ~= nil then wfact = a.wfact end
         end
       end
     end
@@ -454,6 +455,7 @@ function match(c, startup)
   if target_screen and c.screen ~= target_screen then c.screen = target_screen end
   if target then c:tags({ target }) end
   if slave then awful.client.setslave(c) end
+  if wfact then awful.client.setwfact(wfact, c) end
 
   -- if target different from current tag, switch or highlight
   if target and target ~= sel then
