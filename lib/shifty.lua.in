@@ -229,7 +229,18 @@ function set(t, args)
     icon = select{ args.icon and image(args.icon), preset.icon and image(preset.icon), awful.tag.getproperty(t,"icon"), config.defaults.icon and image(config.defaults.icon) },
     icon_only = select{ args.icon_only, preset.icon_only, awful.tag.getproperty(t,"icon_only"), config.defaults.icon_only },
     sweep_delay = select{ args.sweep_delay, preset.sweep_delay, awful.tag.getproperty(t,"sweep_delay"), config.defaults.sweep_delay },
+    overload_keys = select{ args.overload_keys, preset.overload_keys, awful.tag.getproperty(t,"overload_keys"), config.defaults.overload_keys },
   }
+
+  -- set keys
+  if args.keys or preset.keys then
+    local keys = awful.util.table.join(config.globalkeys, args.keys or preset.keys)
+    if props.overload_keys then
+      props.keys = keys
+    else
+      props.keys = squash_keys(keys)
+    end
+  end
 
   -- calculate desired taglist index
   local index = args.index or preset.index or config.defaults.index
@@ -660,9 +671,24 @@ end
 
 -- {{{ tagkeys : hook function that sets keybindings per tag
 function tagkeys(s)
-  if not config.globalkeys then return end
   local sel = awful.tag.selected(s)
-  root.keys(awful.util.table.join(config.globalkeys, sel and config.tags[sel.name] and config.tags[sel.name].keys or {}))
+  local keys = awful.tag.getproperty(sel, "keys") or config.globalkeys
+  if keys then root.keys(keys) end
+end
+-- }}}
+
+-- {{{ squash_keys: helper function which removes duplicate keybindings
+-- by picking only the last one to be listed in keys table arg
+function squash_keys(keys)
+  local squashed = {}
+  local ret = {}
+  for i, k in ipairs(keys) do
+    squashed[table.concat(k.modifiers) .. k.keysym] = k
+  end
+  for i, k in pairs(squashed) do
+    table.insert(ret, k)
+  end
+  return ret
 end
 -- }}}
 
