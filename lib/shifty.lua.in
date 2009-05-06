@@ -35,6 +35,7 @@ config.remember_index = true
 config.default_name = "new"
 config.clientkeys = {}
 config.globalkeys = nil
+config.layouts = {}
 config.prompt_sources = { "config_tags", "config_apps", "existing", "history" }
 config.prompt_matchers = { "^", ":", "" }
 
@@ -231,6 +232,11 @@ function set(t, args)
     sweep_delay = select{ args.sweep_delay, preset.sweep_delay, awful.tag.getproperty(t,"sweep_delay"), config.defaults.sweep_delay },
     overload_keys = select{ args.overload_keys, preset.overload_keys, awful.tag.getproperty(t,"overload_keys"), config.defaults.overload_keys },
   }
+
+  -- get layout by name if given as string
+  if type(props.layout) == "string" then
+    props.layout = getlayout(props.layout)
+  end
 
   -- set keys
   if args.keys or preset.keys then
@@ -691,6 +697,14 @@ function squash_keys(keys)
     table.insert(ret, k)
   end
   return ret
+end
+-- }}}
+
+-- {{{ getlayout: returns a layout by name
+function getlayout(name)
+  for _, layout in ipairs(config.layouts) do
+    if awful.layout.getname(layout) == name then return layout end
+  end
 end
 -- }}}
 
