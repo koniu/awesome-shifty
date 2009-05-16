@@ -233,7 +233,7 @@ function set(t, args)
     persist = select{ args.persist, preset.persist, awful.tag.getproperty(t,"persist"), config.defaults.persist },
     nopopup = select{ args.nopopup, preset.nopopup, awful.tag.getproperty(t,"nopopup"), config.defaults.nopopup },
     leave_kills = select{ args.leave_kills, preset.leave_kills, awful.tag.getproperty(t,"leave_kills"), config.defaults.leave_kills },
-    solitary = select{ args.solitary, preset.solitary, awful.tag.getproperty(t,"solitary"), config.defaults.solitary },
+    max_clients = select{ args.max_clients, preset.max_clients, awful.tag.getproperty(t,"max_clients"), config.defaults.max_clients },
     position = select{ args.position, preset.position, guessed_position, awful.tag.getproperty(t,"position" ) },
     icon = select{ args.icon and image(args.icon), preset.icon and image(preset.icon), awful.tag.getproperty(t,"icon"), config.defaults.icon and image(config.defaults.icon) },
     icon_only = select{ args.icon_only, preset.icon_only, awful.tag.getproperty(t,"icon_only"), config.defaults.icon_only },
@@ -457,7 +457,8 @@ function match(c, startup)
       target_tags = c.transient_for:tags()
     elseif #sel > 0 then
       for i, t in ipairs(sel) do
-        if not (awful.tag.getproperty(t,"exclusive") or awful.tag.getproperty(t,"solitary")) or intrusive then
+        local mc = awful.tag.getproperty(t,"max_clients")
+        if not (awful.tag.getproperty(t,"exclusive") or (mc and mc >= #t:clients())) or intrusive then
           table.insert(target_tags, t)
         end
       end
@@ -478,7 +479,8 @@ function match(c, startup)
     for i, tn in ipairs(target_tag_names) do
       local res = {}
       for j, t in ipairs(name2tags(tn, target_screen) or name2tags(tn) or {}) do
-        if not (awful.tag.getproperty(t,"solitary") and #target:clients() > 0) or intrusive then
+        local mc = awful.tag.getproperty(t,"max_clients")
+        if not (mc and (#t:clients() >= mc)) or intrusive then
           table.insert(res, t)
         end
       end
