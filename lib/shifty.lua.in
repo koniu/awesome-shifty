@@ -377,7 +377,7 @@ end
 --            rc.lua
 --@param c : client to be matched
 function match(c, startup)
-  local nopopup, intrusive, nofocus, run, slave, wfact
+  local nopopup, intrusive, nofocus, run, slave, wfact, struts, geom
   local target_tag_names, target_tags = {}, {}
   local typ = c.type
   local cls = c.class
@@ -410,7 +410,7 @@ function match(c, startup)
             end
           end
           if a.float ~= nil then awful.client.floating.set(c, a.float) end
-          if a.geometry ~=nil then c:geometry({ x = a.geometry[1], y = a.geometry[2], width = a.geometry[3], height = a.geometry[4] }) end
+          if a.geometry ~=nil then geom = { x = a.geometry[1], y = a.geometry[2], width = a.geometry[3], height = a.geometry[4] } end
           if a.slave ~=nil then slave = a.slave end
           if a.nopopup ~=nil then nopopup = a.nopopup end
           if a.intrusive ~=nil then intrusive = a.intrusive end
@@ -432,7 +432,7 @@ function match(c, startup)
           if a.run ~= nil then run = a.run end
           if a.sticky ~= nil then c.sticky = a.sticky end
           if a.wfact ~= nil then wfact = a.wfact end
-          if a.struts then c:struts(a.struts) end
+          if a.struts then struts = a.struts end
         end
       end
     end
@@ -498,6 +498,8 @@ function match(c, startup)
   c:tags( target_tags )
   if slave then awful.client.setslave(c) end
   if wfact then awful.client.setwfact(wfact, c) end
+  if geom then c:geometry(geom) end
+  if struts then c:struts(struts) end
 
   -- switch or highlight
   local showtags = {}
