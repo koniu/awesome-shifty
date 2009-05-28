@@ -438,6 +438,7 @@ function match(c, startup)
           if a.sticky ~= nil then c.sticky = a.sticky end
           if a.wfact ~= nil then wfact = a.wfact end
           if a.struts then struts = a.struts end
+          if a.skip_taskbar ~= nil then c.skip_taskbar = a.skip_taskbar end
         end
       end
     end
