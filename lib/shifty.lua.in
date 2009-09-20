@@ -4,7 +4,7 @@
 --
 -- http://awesome.naquadah.org/wiki/index.php?title=Shifty
 
--- package env
+-- {{{ environment
 local type = type
 local tag = tag
 local ipairs = ipairs
@@ -24,8 +24,11 @@ local wibox = wibox
 local root = root
 local dbg= dbg
 local timer = timer
-module("shifty")
 
+module("shifty")
+-- }}}
+
+-- {{{ variables
 config = {}
 config.tags = {}
 config.apps = {}
@@ -43,6 +46,7 @@ config.prompt_matchers = { "^", ":", "" }
 local matchp = ""
 local index_cache = {}
 for i = 1, screen.count() do index_cache[i] = {} end
+-- }}}
 
 --{{{ name2tags: matches string 'name' to tag objects
 -- @param name : tag name to find
@@ -113,8 +117,8 @@ function rename(tag, prefix, no_selectall)
         awful.tag.setproperty(t, "initial", true)
         set(t)
       end
-      awful.hooks.user.call("tags", scr)
       tagkeys(screen[scr])
+      screen[scr]:emit_signal("tag::detach")
     end
     )
 end
@@ -136,9 +140,6 @@ end
 function send_next() send(1) end
 function send_prev() send(-1) end
 --}}}
-
-function shift_next() set(awful.tag.selected(), { rel_index = 1 }) end
-function shift_prev() set(awful.tag.selected(), { rel_index = -1 }) end
 
 --{{{ pos2idx: translate shifty position to tag index
 --@param pos: position (an integer)
@@ -303,6 +304,9 @@ function set(t, args)
 
   return t
 end
+
+function shift_next() set(awful.tag.selected(), { rel_index = 1 }) end
+function shift_prev() set(awful.tag.selected(), { rel_index = -1 }) end
 --}}}
 
 --{{{ add : adds a tag
@@ -789,19 +793,16 @@ function getlayout(name)
 end
 -- }}}
 
+-- {{{ signals
 client.add_signal("manage", match)
 client.add_signal("unmanage", sweep)
 client.remove_signal("manage", awful.tag.withcurrent)
+
 for s = 1, screen.count() do
---awful.tag.attached_add_signal(s, "property::selected", tagkeys)
   awful.tag.attached_add_signal(s, "property::selected", sweep)
   awful.tag.attached_add_signal(s, "tagged", sweep)
   screen[s]:add_signal("tag::history::update", tagkeys)
 end
---awful.hooks.manage.unregister(awful.tag.withcurrent)
---awful.hooks.tags.register(sweep)
---awful.hooks.tags.register(tagkeys)
---awful.hooks.clients.register(sweep)
---awful.hooks.manage.register(match)
+-- }}}
 
 -- vim: foldmethod=marker:filetype=lua:expandtab:shiftwidth=2:tabstop=2:softtabstop=2:encoding=utf-8:textwidth=80
