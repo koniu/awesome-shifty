@@ -105,8 +105,8 @@ function rename(tag, prefix, no_selectall)
 
   awful.prompt.run( { 
     fg_cursor = fg, bg_cursor = bg, ul_cursor = "single",
-    text = text, selectall = not no_selectall },
-    taglist[scr][tag2index(scr,t)][1],
+    text = text, selectall = not no_selectall, prompt = " ", autoexec = true },
+    taglist[scr][tag2index(scr,t)*2],
     function (name) if name:len() > 0 then t.name = name; end end, 
     completion,
     awful.util.getdir("cache") .. "/history_tags", nil,
@@ -392,13 +392,14 @@ end
 --            rc.lua
 --@param c : client to be matched
 function match(c, startup)
-  local nopopup, intrusive, nofocus, run, slave, wfact, struts, geom, float
+  local nopopup, intrusive, nofocus, run, slave, wfact, struts, geom, float, fullscreen
   local target_tag_names, target_tags = {}, {}
   local typ = c.type
   local cls = c.class
   local inst = c.instance
   local role = c.role
   local name = c.name
+  local iname = c.icon_name
   local keys = config.clientkeys or c:keys() or {}
   local target_screen = mouse.screen
 
@@ -413,6 +414,7 @@ function match(c, startup)
           (cls and cls:find(w)) or
           (inst and inst:find(w)) or
           (name and name:find(w)) or
+          (iname and iname:find(w)) or
           (role and role:find(w)) or
           (typ and typ:find(w))
         then
@@ -431,7 +433,7 @@ function match(c, startup)
           if a.border_width ~= nil then c.border_width = a.border_width end
           if a.nopopup ~=nil then nopopup = a.nopopup end
           if a.intrusive ~=nil then intrusive = a.intrusive end
-          if a.fullscreen ~=nil then c.fullscreen = a.fullscreen end
+          if a.fullscreen ~=nil then fullscreen = a.fullscreen end
           if a.honorsizehints ~=nil then c.size_hints_honor = a.honorsizehints end
           if a.kill ~=nil then c:kill(); return end
           if a.ontop ~= nil then c.ontop = a.ontop end
@@ -445,6 +447,7 @@ function match(c, startup)
           if a.dockable ~= nil then awful.client.dockable.set(c, a.dockable) end
           if a.urgent ~= nil then c.urgent = a.urgent end
           if a.opacity ~= nil then c.opacity = a.opacity end
+          if a.titlebar ~= nil then awful.titlebar.add(c) end
           if a.run ~= nil then run = a.run end
           if a.sticky ~= nil then c.sticky = a.sticky end
           if a.wfact ~= nil then wfact = a.wfact end
@@ -462,9 +465,13 @@ function match(c, startup)
   c:keys(keys)
 
   -- set properties of floating clients
-  if awful.client.floating.get(c) then
-    awful.placement.centered(c, c.transient_for)
-    awful.placement.no_offscreen(c) -- this always seems to stick the client at 0,0 (incl titlebar)
+  if float or awful.client.floating.get(c) then
+    if c.transient_for then
+      awful.placement.centered(c, c.transient_for)
+    else 
+      awful.placement.no_overlap(c)
+      awful.placement.no_offscreen(c)
+    end
   end
 
   -- if not matched to some names try putting client in c.transient_for or current tags
@@ -518,6 +525,7 @@ function match(c, startup)
   if float ~= nil then awful.client.floating.set(c, float) end
   if geom then c:geometry(geom) end
   if struts then c:struts(struts) end
+  if fullscreen then c.fullscreen = fullscreen end
 
   -- switch or highlight
   local showtags = {}
@@ -710,8 +718,10 @@ function completion(cmd, cur_pos, ncomp, sources, matchers)
     history = function()
       local ret = {}
       local f = io.open(awful.util.getdir("cache") .. "/history_tags")
-      for name in f:lines() do table.insert(ret, name) end
+      if f then
+        for name in f:lines() do table.insert(ret, name) end
       f:close()
+      end
       return ret
     end,
   }
@@ -754,7 +764,7 @@ function completion(cmd, cur_pos, ncomp, sources, matchers)
   end
 
   -- return match and position
-  return matches[ncomp], cur_pos
+  return matches[ncomp], cur_pos, matches
 end
 --}}}
 
